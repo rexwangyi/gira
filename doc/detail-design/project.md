@@ -38,23 +38,7 @@ graph LR
 
 ### 2.1 メイン画面レイアウト
 
-```mermaid
-flowchart TD
-    classDef container fill:#f5f5f5,stroke:#666,stroke-width:2px
-    classDef component fill:#fff,stroke:#333
-    classDef content fill:#fafafa,stroke:#999
-
-    MainContainer[メインコンテナ]:::container
-    Header[ヘッダー]:::component
-    CreateButton[新規作成ボタン]:::component
-    ProjectList[プロジェクト一覧]:::content
-
-    MainContainer --> Header
-    MainContainer --> CreateButton
-    MainContainer --> ProjectList
-
-    ProjectList --> Project1[プロジェクトカード]:::component
-```
+![プロジェクト管理画面キャプチャ](../assets/image/project_cap.png)
 
 ### 2.2 プロジェクト一覧
 

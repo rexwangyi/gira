@@ -38,49 +38,7 @@ graph LR
 
 ### 2.1 メイン画面レイアウト
 
-```mermaid
-flowchart TD
-    classDef container fill:#f5f5f5,stroke:#666,stroke-width:2px
-    classDef component fill:#fff,stroke:#333
-    classDef content fill:#fafafa,stroke:#999
-
-    %% メインコンテナ
-    MainContainer[メインコンテナ]:::container
-
-    %% ヘッダー領域
-    Header[ヘッダー]:::component
-
-    %% 左サイドバー
-    Sidebar[サイドバー]:::container
-    ProjectSelector[プロジェクト選択]:::component
-    Navigation[ナビゲーション]:::component
-
-    %% メインコンテンツ
-    Content[メインコンテンツ]:::container
-    Sprint1[Sprint 1]:::content
-    Sprint2[Sprint 2]:::content
-    Backlog[バックログ]:::content
-
-    %% 構造の定義
-    MainContainer --> Header
-    MainContainer --> Sidebar
-    MainContainer --> Content
-
-    %% サイドバーの内容
-    Sidebar --> ProjectSelector
-    Sidebar --> Navigation
-
-    %% メインコンテンツの内容
-    Content --> Sprint1
-    Content --> Sprint2
-    Content --> Backlog
-
-    %% スプリントの内容
-    Sprint1 --> Story1[ストーリー]:::component
-    Sprint1 --> Story2[ストーリー]:::component
-    Sprint2 --> Story3[ストーリー]:::component
-    Backlog --> Story4[ストーリー]:::component
-```
+![バックログ画面キャプチャ](../assets/image/backlog_cap.png)
 
 ### 2.2 コンテンツ詳細
 
@@ -103,7 +61,7 @@ flowchart TD
 | 状態         | 文字列   | Sprint.status                        | アイコン＋テキスト      |
 | 期間         | 日付     | Sprint.start_date<br>Sprint.end_date | YYYY/MM/DD - YYYY/MM/DD |
 | ストーリー数 | 数値     | -                                    | n 件（集計値）          |
-| 実行状 ���   | 文字列   | Sprint.status                        | アイコン＋実行中/完了   |
+| 実行状況     | 文字列   | Sprint.status                        | アイコン＋実行中/完了   |
 
 #### 2.2.2 ストーリー作成/編集モーダル
 
