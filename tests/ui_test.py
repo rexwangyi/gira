@@ -22,6 +22,7 @@ logging.getLogger('selenium').setLevel(logging.ERROR)
 chrome_options = Options()
 chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
 
+
 # スクリーンショットの保存先を設定
 RESULT_DIR = os.path.join(os.path.dirname(__file__), 'result')
 os.makedirs(RESULT_DIR, exist_ok=True)
