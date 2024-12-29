@@ -42,3 +42,6 @@ Thumbs.db
 # Test results
 tests/result/
 tests/result/*
+.coverage
+instance/gira.db
+instance/giratest.db
