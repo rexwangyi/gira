@@ -12,15 +12,18 @@ import unittest
 import logging
 import traceback
 import os
+import tempfile
 
 # Seleniumのログレベルを設定
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 logging.getLogger('selenium').setLevel(logging.ERROR)
+temp_dir = tempfile.mkdtemp()
 
 # Chromeドライバーのログを無効化
 chrome_options = Options()
 chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
+chrome_options.add_argument(f"--user-data-dir={temp_dir}")
 
 
 # スクリーンショットの保存先を設定
