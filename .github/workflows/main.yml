@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.13"
 
@@ -38,4 +38,10 @@ jobs:
           nohup flask run &
 
       - name: Run Pytest
-        run: pytest
+        run: pytest --html=report.html --self-contained-html
+
+      - name: Upload test report
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-report
+          path: report.html
