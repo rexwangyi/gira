@@ -33,10 +33,10 @@ jobs:
           nohup flask run &
 
       - name: Run Pytest
-        run: pytest --html=report.html --self-contained-html
+        run: pytest
 
       - name: Upload test report
         uses: actions/upload-artifact@v4
         with:
           name: test-report
-          path: report.html
+          path: htmlcov/
