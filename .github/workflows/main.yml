@@ -33,10 +33,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: clean Chrome and ChromeDriver
+      - name: Start application
         run: |
-          pkill -f chromedriver || true
-          pkill -f chrome || true
+          nohup flask run &
 
       - name: Run Pytest
         run: pytest
