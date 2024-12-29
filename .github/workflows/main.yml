@@ -10,14 +10,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Setup Chrome
-        uses: browser-actions/setup-chrome@v1.7.2
-        with:
-          install-chromedriver: true
-          
+      # - name: Setup Chrome
+      #   uses: browser-actions/setup-chrome@v1.7.2
+      #   with:
+      #     install-chromedriver: true
+
       - name: Check Chrome
-        run: chrome --version
-      
+        run: |
+          chrome --version
+          chromedriver --version
+
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -35,6 +37,6 @@ jobs:
         run: |
           pkill -f chromedriver || true
           pkill -f chrome || true
-          
+
       - name: Run Pytest
         run: pytest

@@ -24,6 +24,8 @@ temp_dir = tempfile.mkdtemp()
 chrome_options = Options()
 chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
 chrome_options.add_argument(f"--user-data-dir={temp_dir}")
+chrome_options.add_argument("--verbose") 
+chrome_options.add_argument("--log-level=3")
 
 
 # スクリーンショットの保存先を設定
