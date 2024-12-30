@@ -31,7 +31,7 @@ jobs:
       - name: Start application
         run: |
           flask db upgrade
-          flask init-db
+          flask init-db --with-testdata
           nohup flask run &
 
       - name: Run Pytest

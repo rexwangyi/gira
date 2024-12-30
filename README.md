@@ -84,8 +84,14 @@ pip install -r requirements.txt
 4. データベースの初期化
 
 ```bash
-flask db upgrade
-python scripts/init_db.py
+# データベースの初期化のみ
+flask init-db
+
+# データベースの初期化とテストデータの作成
+flask init-db --with-testdata
+
+# テストデータのみを作成
+flask create-test-data
 ```
 
 5. アプリケーションの起動

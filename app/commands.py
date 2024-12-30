@@ -9,18 +9,31 @@ from datetime import datetime, timedelta, UTC
 
 
 @click.command("init-db")
+@click.option("--with-testdata", is_flag=True, help="テストデータも一緒に作成します")
 @with_appcontext
-def init_db_command():
-    """Clear the existing data and create new tables."""
+def init_db_command(with_testdata):
+    """データベースを初期化し、必要に応じてテストデータを作成します。"""
+    # データベースの初期化
     db.drop_all()
     db.create_all()
-    click.echo("Initialized the database.")
+    click.echo("データベースを初期化しました。")
+
+    # テストデータの作成（オプション）
+    if with_testdata:
+        _create_test_data()
+        click.echo("テストデータを作成しました。")
 
 
 @click.command("create-test-data")
 @with_appcontext
-def create_test_data():
-    """Create some test data."""
+def create_test_data_command():
+    """テストデータを作成します。"""
+    _create_test_data()
+    click.echo("テストデータを作成しました。")
+
+
+def _create_test_data():
+    """テストデータを作成する内部関数"""
     # 创建管理员用户
     admin = User(
         username="admin",
@@ -198,4 +211,3 @@ def create_test_data():
         db.session.add(story)
 
     db.session.commit()
-    click.echo("Created test data.")

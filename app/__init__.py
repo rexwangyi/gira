@@ -73,10 +73,10 @@ def create_app(test_config=None):
     def index():
         return redirect(url_for("backlog.index"))
 
-    from . import commands
-
+    # コマンドの登録
+    from app import commands
     app.cli.add_command(commands.init_db_command)
-    app.cli.add_command(commands.create_test_data)
+    app.cli.add_command(commands.create_test_data_command)
 
     return app
 
