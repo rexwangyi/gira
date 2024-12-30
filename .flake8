@@ -1,6 +1,6 @@
 [flake8]
 # 1行の最大文字数
-max-line-length = 120
+max-line-length = 170
 
 # 除外するディレクトリ
 exclude = 

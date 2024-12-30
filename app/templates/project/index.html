@@ -1,250 +1,293 @@
-{% extends "base.html" %}
-
-{% block content %}
+{% extends "base.html" %} {% block content %}
 <div class="container-fluid">
-    <!-- 标题栏 -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3">プロジェクト一覧</h1>
-        <button class="btn btn-primary" onclick="openCreateModal()">
-            <i class="bi bi-plus-lg"></i> 新規作成
-        </button>
-    </div>
+  <!-- 标题栏 -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">プロジェクト一覧</h1>
+    <button class="btn btn-primary" onclick="openCreateModal()">
+      <i class="bi bi-plus-lg"></i> 新規作成
+    </button>
+  </div>
 
-    <!-- 搜索栏 -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <form class="row g-3" id="search-form">
-                <div class="col-md-4">
-                    <label for="search-name" class="form-label">プロジェクト名</label>
-                    <input type="text" class="form-control" id="search-name" name="name" placeholder="プロジェクト名で検索">
-                </div>
-                <div class="col-md-3">
-                    <label for="search-status" class="form-label">ステータス</label>
-                    <select class="form-select" id="search-status" name="status">
-                        <option value="">全て</option>
-                        <option value="active">Active</option>
-                        <option value="archived">Archived</option>
-                    </select>
-                </div>
-                <div class="col-md-12">
-                    <button type="submit" class="btn btn-secondary">
-                        <i class="bi bi-search"></i> 検索
-                    </button>
-                </div>
-            </form>
+  <!-- 搜索栏 -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <form class="row g-3" id="search-form">
+        <div class="col-md-4">
+          <label for="search-name" class="form-label">プロジェクト名</label>
+          <input
+            type="text"
+            class="form-control"
+            id="search-name"
+            name="name"
+            placeholder="プロジェクト名で検索"
+          />
         </div>
+        <div class="col-md-3">
+          <label for="search-status" class="form-label">ステータス</label>
+          <select class="form-select" id="search-status" name="status">
+            <option value="">全て</option>
+            <option value="active">Active</option>
+            <option value="archived">Archived</option>
+          </select>
+        </div>
+        <div class="col-md-12">
+          <button type="submit" class="btn btn-secondary">
+            <i class="bi bi-search"></i> 検索
+          </button>
+        </div>
+      </form>
     </div>
+  </div>
 
-    <!-- 项目列表表格 -->
-    <div class="card">
-        <div class="card-body p-0">
-            <table class="table table-hover mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>キー</th>
-                        <th>プロジェクト名</th>
-                        <th>説明</th>
-                        <th>ステータス</th>
-                        <th>作成日</th>
-                        <th class="text-end">操作</th>
-                    </tr>
-                </thead>
-                <tbody id="project-list">
-                </tbody>
-            </table>
-        </div>
+  <!-- 项目列表表格 -->
+  <div class="card">
+    <div class="card-body p-0">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>キー</th>
+            <th>プロジェクト名</th>
+            <th>説明</th>
+            <th>ステータス</th>
+            <th>作成日</th>
+            <th class="text-end">操作</th>
+          </tr>
+        </thead>
+        <tbody id="project-list"></tbody>
+      </table>
     </div>
+  </div>
 </div>
 
 <!-- 创建/编辑模态框 -->
 <div class="modal fade" id="project-modal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modal-title">プロジェクト作成</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="project-form" onsubmit="handleSubmit(event)">
-                    <input type="hidden" id="project-id">
-                    <div class="mb-3">
-                        <label for="name" class="form-label">プロジェクト名 <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="name" name="name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="description" class="form-label">説明</label>
-                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="status" class="form-label">ステータス</label>
-                        <select class="form-select" id="status" name="status">
-                            <option value="active">Active</option>
-                            <option value="archived">Archived</option>
-                        </select>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
-                <button type="submit" form="project-form" class="btn btn-primary">保存</button>
-            </div>
-        </div>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modal-title">プロジェクト作成</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <form id="project-form" onsubmit="handleSubmit(event)">
+          <input type="hidden" id="project-id" />
+          <div class="mb-3">
+            <label for="name" class="form-label"
+              >プロジェクト名 <span class="text-danger">*</span></label
+            >
+            <input
+              type="text"
+              class="form-control"
+              id="name"
+              name="name"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label for="description" class="form-label">説明</label>
+            <textarea
+              class="form-control"
+              id="description"
+              name="description"
+              rows="3"
+            ></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="status" class="form-label">ステータス</label>
+            <select class="form-select" id="status" name="status">
+              <option value="active">Active</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          キャンセル
+        </button>
+        <button type="submit" form="project-form" class="btn btn-primary">
+          保存
+        </button>
+      </div>
     </div>
+  </div>
 </div>
 
 {% block scripts %}
 <script>
-let projectModal;
+  let projectModal;
 
-document.addEventListener('DOMContentLoaded', function() {
-    projectModal = new bootstrap.Modal(document.getElementById('project-modal'));
+  document.addEventListener("DOMContentLoaded", function () {
+    projectModal = new bootstrap.Modal(
+      document.getElementById("project-modal")
+    );
     fetchProjects();
 
-    document.getElementById('search-form').addEventListener('submit', function(e) {
+    document
+      .getElementById("search-form")
+      .addEventListener("submit", function (e) {
         e.preventDefault();
         fetchProjects({
-            name: document.getElementById('search-name').value,
-            status: document.getElementById('search-status').value
+          name: document.getElementById("search-name").value,
+          status: document.getElementById("search-status").value,
         });
-    });
-});
+      });
+  });
 
-// 获取项目列表
-async function fetchProjects(filters = {}) {
-    let url = '/api/project/list';
+  // 获取项目列表
+  async function fetchProjects(filters = {}) {
+    let url = "/api/project/list";
     if (Object.keys(filters).length > 0) {
-        url += '?' + new URLSearchParams(filters).toString();
+      url += "?" + new URLSearchParams(filters).toString();
     }
-    
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        renderProjects(data.projects || []);
-    } catch (error) {
-        console.error('Error fetching projects:', error);
-        // 显示错误信息给用户
-        const container = document.getElementById('project-list');
-        container.innerHTML = `<tr><td colspan="6" class="text-center text-danger">プロジェクトの取得に失敗しました</td></tr>`;
-    }
-}
 
-// 渲染项目列表
-function renderProjects(projects) {
-    const container = document.getElementById('project-list');
-    container.innerHTML = '';
-    
-    if (projects.length === 0) {
-        container.innerHTML = `<tr><td colspan="6" class="text-center">プロジェクトがありません</td></tr>`;
-        return;
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      renderProjects(data.projects || []);
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+      // 显示错误信息给用户
+      const container = document.getElementById("project-list");
+      container.innerHTML = `<tr><td colspan="6" class="text-center text-danger">プロジェクトの取得に失敗しました</td></tr>`;
     }
-    
-    projects.forEach(project => {
-        const row = document.createElement('tr');
-        row.dataset.id = project.id;
-        
-        row.innerHTML = `
+  }
+
+  // 渲染项目列表
+  function renderProjects(projects) {
+    const container = document.getElementById("project-list");
+    container.innerHTML = "";
+
+    if (projects.length === 0) {
+      container.innerHTML = `<tr><td colspan="6" class="text-center">プロジェクトがありません</td></tr>`;
+      return;
+    }
+
+    projects.forEach((project) => {
+      const row = document.createElement("tr");
+      row.dataset.id = project.id;
+
+      row.innerHTML = `
             <td>${project.key}</td>
             <td>${project.name}</td>
-            <td>${project.description || ''}</td>
+            <td>${project.description || ""}</td>
             <td>
-                <span class="badge ${project.status === 'active' ? 'bg-success' : 'bg-secondary'}">
+                <span class="badge ${
+                  project.status === "active" ? "bg-success" : "bg-secondary"
+                }">
                     ${project.status}
                 </span>
             </td>
             <td>${project.created_at}</td>
             <td class="text-end">
-                <button class="btn btn-sm btn-outline-secondary" onclick="openEditModal(${project.id})">
+                <button class="btn btn-sm btn-outline-secondary" onclick="openEditModal(${
+                  project.id
+                })">
                     <i class="bi bi-pencil"></i>
                 </button>
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteProject(${project.id})">
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteProject(${
+                  project.id
+                })">
                     <i class="bi bi-trash"></i>
                 </button>
             </td>
         `;
-        
-        container.appendChild(row);
+
+      container.appendChild(row);
     });
-}
+  }
 
-// 打开创建模态框
-function openCreateModal() {
-    document.getElementById('modal-title').textContent = 'プロジェクト作成';
-    document.getElementById('project-form').reset();
-    document.getElementById('project-id').value = '';
+  // 打开创建模态框
+  function openCreateModal() {
+    document.getElementById("modal-title").textContent = "プロジェクト作成";
+    document.getElementById("project-form").reset();
+    document.getElementById("project-id").value = "";
     projectModal.show();
-}
+  }
 
-// 打开编辑模态框
-async function openEditModal(projectId) {
-    document.getElementById('modal-title').textContent = 'プロジェクト編集';
-    const response = await fetch('/api/project/list');
-    const projects = await response.json();
-    const project = projects.find(p => p.id === parseInt(projectId));
-    
-    document.getElementById('project-id').value = project.id;
-    document.getElementById('name').value = project.name;
-    document.getElementById('description').value = project.description;
-    document.getElementById('status').value = project.status;
-    projectModal.show();
-}
+  // 打开编辑模态框
+  async function openEditModal(projectId) {
+    document.getElementById("modal-title").textContent = "プロジェクト編集";
+    try {
+      const response = await fetch("/api/project/list");
+      const data = await response.json();
+      const project = data.projects.find((p) => p.id === parseInt(projectId));
 
-// 处理表单提交
-async function handleSubmit(event) {
+      if (project) {
+        document.getElementById("project-id").value = project.id;
+        document.getElementById("name").value = project.name;
+        document.getElementById("description").value =
+          project.description || "";
+        document.getElementById("status").value = project.status;
+        projectModal.show();
+      } else {
+        alert("プロジェクトの取得に失敗しました。");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("プロジェクトの取得に失敗しました。");
+    }
+  }
+
+  // 处理表单提交
+  async function handleSubmit(event) {
     event.preventDefault();
     const formData = new FormData(event.target);
     const data = Object.fromEntries(formData);
-    const projectId = document.getElementById('project-id').value;
-    
-    const url = projectId ? '/api/project/update' : '/api/project/create';
+    const projectId = document.getElementById("project-id").value;
+
+    const url = projectId ? "/api/project/update" : "/api/project/create";
     if (projectId) data.id = projectId;
-    
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-        });
-        
-        if (response.ok) {
-            projectModal.hide();
-            fetchProjects();
-        }
-    } catch (error) {
-        console.error('Error:', error);
-    }
-}
 
-// 删除项目
-async function deleteProject(projectId) {
-    if (!confirm('本当に削除しますか？')) return;
-    
     try {
-        const response = await fetch('/api/project/delete', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ id: projectId }),
-        });
-        
-        if (response.ok) {
-            fetchProjects();
-        }
-    } catch (error) {
-        console.error('Error:', error);
-    }
-}
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
 
-// 重置搜索
-function resetSearch() {
-    document.getElementById('search-form').reset();
+      if (response.ok) {
+        projectModal.hide();
+        fetchProjects();
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  }
+
+  // 删除项目
+  async function deleteProject(projectId) {
+    if (!confirm("本当に削除しますか？")) return;
+
+    try {
+      const response = await fetch("/api/project/delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: projectId }),
+      });
+
+      if (response.ok) {
+        fetchProjects();
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  }
+
+  // 重置搜索
+  function resetSearch() {
+    document.getElementById("search-form").reset();
     fetchProjects();
-}
+  }
 </script>
-{% endblock %}
-{% endblock %} 
+{% endblock %} {% endblock %}
