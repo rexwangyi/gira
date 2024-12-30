@@ -1,5 +1,7 @@
 # Gira - プロジェクト管理システム
 
+![Run Tests](https://github.com/rexwangyi/gira/actions/workflows/main.yml/badge.svg)
+
 Gira は Flask で開発されたプロジェクト管理システムです。カンバンボード、バックログ管理、スプリント管理などの機能を提供します。
 
 ![ロゴ](doc/assets/image/logo.png)
