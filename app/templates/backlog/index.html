@@ -1,359 +1,491 @@
-{% extends "base.html" %}
-
-{% block content %}
+{% extends "base.html" %} {% block content %}
 <div class="d-flex">
-    <!-- メインコンテンツ -->
-    <div class="flex-grow-1 main-content">
-        <div class="container-fluid p-4">
-            {% if current_project %}
-            <div class="row mb-4">
-                <div class="col">
-                    <h3>Backlog</h3>
-                </div>
-            </div>
-
-            <!-- Sprint Planning Area -->
-            {% for sprint in sprints %}
-            <div class="sprint-section">
-                <div class="sprint-header">
-                    <div class="sprint-title">
-                        <i class="bi bi-chevron-down sprint-toggle" onclick="toggleSprint(this, 'sprint-{{ sprint.id }}')"></i>
-                        <div class="sprint-info-container">
-                            <div class="d-flex align-items-center">
-                                <span class="sprint-name">{{ sprint.name }}</span>
-                                <span class="sprint-info ms-2">{{ sprint.stories|length }}件</span>
-                                {% if sprint.status == 'active' %}
-                                <span class="sprint-status ms-2">
-                                    <i class="bi bi-play-circle-fill text-success"></i>
-                                    <span class="status-text">実行中</span>
-                                </span>
-                                {% elif sprint.status == 'completed' %}
-                                <span class="sprint-status completed ms-2">
-                                    <i class="bi bi-check-circle-fill"></i>
-                                    <span class="status-text">完了</span>
-                                </span>
-                                {% endif %}
-                                {% if sprint.goal %}
-                                <span class="sprint-goal ms-2">
-                                    <i class="bi bi-flag me-1"></i>{{ sprint.goal }}
-                                </span>
-                                {% endif %}
-                            </div>
-                            {% if sprint.start_date and sprint.end_date %}
-                            <div class="sprint-date">{{ sprint.start_date.strftime('%Y/%m/%d') }} - {{ sprint.end_date.strftime('%Y/%m/%d') }}</div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% if sprint.status == 'planning' %}
-                    <button class="btn btn-sprint" onclick="startSprint({{ sprint.id }})" {% if active_sprint and active_sprint.id != sprint.id %}disabled{% endif %}>
-                        Start Sprint
-                    </button>
-                    {% elif sprint.status == 'active' %}
-                    <button class="btn btn-sprint" onclick="completeSprint({{ sprint.id }})">
-                        Complete Sprint
-                    </button>
-                    {% endif %}
-                </div>
-                <div id="sprint-{{ sprint.id }}" class="story-list">
-                    {% for story in sprint.stories %}
-                    <div class="story-row {% if story.status == 'done' %}story-done{% endif %}"
-                        data-story-id="{{ story.id }}" 
-                        {% if sprint.status != 'completed' %}
-                        onclick="handleStoryClick(event, {{ story.id }}, '{{ story.title }}', '{{ story.description }}', {{ story.story_points or 0 }}, {{ story.assignee_id or 0 }}, {{ story.priority or 0 }})"
-                        {% endif %}>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="d-flex align-items-center">
-                                <i class="bi bi-bookmark-fill me-2"></i>
-                                <div class="d-flex align-items-center">
-                                    <span class="story-title">{{ story.title }}</span>
-                                    {% if story.status == 'todo' %}
-                                    <span class="story-status status-todo">Todo</span>
-                                    {% elif story.status == 'doing' %}
-                                    <span class="story-status status-doing">In Progress</span>
-                                    {% elif story.status == 'done' %}
-                                    <span class="story-status status-done">Done</span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="d-flex align-items-center gap-2">
-                                {% if story.assignee %}
-                                <div class="user-avatar" style="background-color: {{ story.assignee.avatar_color }}">
-                                    {% if story.assignee.username|length >= 2 %}
-                                        {{ story.assignee.username[:2].upper() }}
-                                    {% else %}
-                                        {{ story.assignee.username[:1].upper() }}
-                                    {% endif %}
-                                </div>
-                                {% endif %}
-                                {% if story.priority > 0 %}
-                                <div class="priority-icon" style="color: {{ story.priority_info.color }}">
-                                    {{ story.priority_info.icon }}
-                                </div>
-                                {% endif %}
-                                <span class="story-points">{{ story.story_points or 0 }}</span>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endfor %}
-
-            <!-- Backlog Area -->
-            <div class="backlog-section">
-                <div class="backlog-header">
-                    <div class="d-flex align-items-center">
-                        <span>Backlog</span>
-                        <span class="backlog-info ms-2">{{ backlog_stories|length }}件</span>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-sprint" data-bs-toggle="modal" data-bs-target="#createStoryModal">
-                            Create Issue
-                        </button>
-                        <button class="btn btn-sprint" data-bs-toggle="modal" data-bs-target="#createSprintModal">
-                            Create Sprint
-                        </button>
-                    </div>
-                </div>
-                <div class="story-list">
-                    {% for story in backlog_stories %}
-                    <div class="story-row" data-story-id="{{ story.id }}" onclick="handleStoryClick(event, {{ story.id }}, '{{ story.title }}', '{{ story.description }}', {{ story.story_points or 0 }}, {{ story.assignee_id or 0 }}, {{ story.priority or 0 }})">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="d-flex align-items-center">
-                                <i class="bi bi-bookmark-fill me-2"></i>
-                                <span class="story-title">{{ story.title }}</span>
-                            </div>
-                            <div class="d-flex align-items-center gap-2">
-                                {% if story.assignee %}
-                                <div class="user-avatar" style="background-color: {{ story.assignee.avatar_color }}">
-                                    {% if story.assignee.username|length >= 2 %}
-                                        {{ story.assignee.username[:2].upper() }}
-                                    {% else %}
-                                        {{ story.assignee.username[:1].upper() }}
-                                    {% endif %}
-                                </div>
-                                {% endif %}
-                                {% if story.priority > 0 %}
-                                <div class="priority-icon" style="color: {{ story.priority_info.color }}">
-                                    {{ story.priority_info.icon }}
-                                </div>
-                                {% endif %}
-                                <span class="story-points">{{ story.story_points or 0 }}</span>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-            {% else %}
-            <div class="alert alert-warning">
-                プロジェクトが選択されていません
-            </div>
-            {% endif %}
+  <!-- メインコンテンツ -->
+  <div class="flex-grow-1 main-content">
+    <div class="container-fluid p-4">
+      {% if current_project %}
+      <div class="row mb-4">
+        <div class="col">
+          <h3>Backlog</h3>
         </div>
+      </div>
+
+      <!-- Sprint Planning Area -->
+      {% for sprint in sprints %}
+      <div class="sprint-section">
+        <div class="sprint-header">
+          <div class="sprint-title">
+            <i
+              class="bi bi-chevron-down sprint-toggle"
+              onclick="toggleSprint(this, 'sprint-{{ sprint.id }}')"
+            ></i>
+            <div class="sprint-info-container">
+              <div class="d-flex align-items-center">
+                <span class="sprint-name">{{ sprint.name }}</span>
+                <span class="sprint-info ms-2"
+                  >{{ sprint.stories|length }}件</span
+                >
+                {% if sprint.status == 'active' %}
+                <span class="sprint-status ms-2">
+                  <i class="bi bi-play-circle-fill text-success"></i>
+                  <span class="status-text">実行中</span>
+                </span>
+                {% elif sprint.status == 'completed' %}
+                <span class="sprint-status completed ms-2">
+                  <i class="bi bi-check-circle-fill"></i>
+                  <span class="status-text">完了</span>
+                </span>
+                {% endif %} {% if sprint.goal %}
+                <span class="sprint-goal ms-2">
+                  <i class="bi bi-flag me-1"></i>{{ sprint.goal }}
+                </span>
+                {% endif %}
+              </div>
+              {% if sprint.start_date and sprint.end_date %}
+              <div class="sprint-date">
+                {{ sprint.start_date.strftime('%Y/%m/%d') }} - {{
+                sprint.end_date.strftime('%Y/%m/%d') }}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          {% if sprint.status == 'planning' %}
+          <button
+            class="btn btn-sprint"
+            onclick="startSprint({{ sprint.id }})"
+            {%
+            if
+            active_sprint
+            and
+            active_sprint.id
+            !="sprint.id"
+            %}disabled{%
+            endif
+            %}
+          >
+            Start Sprint
+          </button>
+          {% elif sprint.status == 'active' %}
+          <button
+            class="btn btn-sprint"
+            onclick="completeSprint({{ sprint.id }})"
+          >
+            Complete Sprint
+          </button>
+          {% endif %}
+        </div>
+        <div id="sprint-{{ sprint.id }}" class="story-list">
+          {% for story in sprint.stories %}
+          <div
+            class="story-row {% if story.status == 'done' %}story-done{% endif %}"
+            data-story-id="{{ story.id }}"
+            {%
+            if
+            sprint.status
+            !="completed"
+            %}
+            onclick="handleStoryClick(event, {{ story.id }}, '{{ story.title }}', '{{ story.description }}', {{ story.story_points or 0 }}, {{ story.assignee_id or 0 }}, {{ story.priority or 0 }})"
+            {%
+            endif
+            %}
+          >
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-bookmark-fill me-2"></i>
+                <div class="d-flex align-items-center">
+                  <span class="story-title">{{ story.title }}</span>
+                  {% if story.status == 'todo' %}
+                  <span class="story-status status-todo">Todo</span>
+                  {% elif story.status == 'doing' %}
+                  <span class="story-status status-doing">In Progress</span>
+                  {% elif story.status == 'done' %}
+                  <span class="story-status status-done">Done</span>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                {% if story.assignee %}
+                <div
+                  class="user-avatar user-avatar-sm"
+                  style="background-color: {{ story.assignee.avatar_color }}"
+                >
+                  {% if story.assignee.username|length >= 2 %} {{
+                  story.assignee.username[:2].upper() }} {% else %} {{
+                  story.assignee.username[:1].upper() }} {% endif %}
+                </div>
+                {% endif %} {% if story.priority > 0 %}
+                <div
+                  class="priority-icon"
+                  style="color: {{ story.priority_info.color }}"
+                >
+                  {{ story.priority_info.icon }}
+                </div>
+                {% endif %}
+                <span class="story-points">{{ story.story_points or 0 }}</span>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+
+      <!-- Backlog Area -->
+      <div class="backlog-section">
+        <div class="backlog-header">
+          <div class="d-flex align-items-center">
+            <span>Backlog</span>
+            <span class="backlog-info ms-2"
+              >{{ backlog_stories|length }}件</span
+            >
+          </div>
+          <div class="d-flex gap-2">
+            <button
+              class="btn btn-sprint"
+              data-bs-toggle="modal"
+              data-bs-target="#createStoryModal"
+            >
+              Create Issue
+            </button>
+            <button
+              class="btn btn-sprint"
+              data-bs-toggle="modal"
+              data-bs-target="#createSprintModal"
+            >
+              Create Sprint
+            </button>
+          </div>
+        </div>
+        <div class="story-list">
+          {% for story in backlog_stories %}
+          <div
+            class="story-row"
+            data-story-id="{{ story.id }}"
+            onclick="handleStoryClick(event, {{ story.id }}, '{{ story.title }}', '{{ story.description }}', {{ story.story_points or 0 }}, {{ story.assignee_id or 0 }}, {{ story.priority or 0 }})"
+          >
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-bookmark-fill me-2"></i>
+                <span class="story-title">{{ story.title }}</span>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                {% if story.assignee %}
+                <div
+                  class="user-avatar user-avatar-sm"
+                  style="background-color: {{ story.assignee.avatar_color }}"
+                >
+                  {% if story.assignee.username|length >= 2 %} {{
+                  story.assignee.username[:2].upper() }} {% else %} {{
+                  story.assignee.username[:1].upper() }} {% endif %}
+                </div>
+                {% endif %} {% if story.priority > 0 %}
+                <div
+                  class="priority-icon"
+                  style="color: {{ story.priority_info.color }}"
+                >
+                  {{ story.priority_info.icon }}
+                </div>
+                {% endif %}
+                <span class="story-points">{{ story.story_points or 0 }}</span>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% else %}
+      <div class="alert alert-warning">プロジェクトが選択されていません</div>
+      {% endif %}
     </div>
+  </div>
 </div>
 
 <!-- ストーリー作成モーダル -->
 <div class="modal fade" id="createStoryModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">ストーリーの追加</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="createStoryForm" onsubmit="return createStory(event)">
-                <div class="modal-body">
-                    <input type="hidden" name="project_id" value="{{ current_project.id if current_project else '' }}">
-                    <div class="mb-3">
-                        <label class="form-label">タイトル</label>
-                        <input type="text" class="form-control" name="title" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">説明</label>
-                        <textarea class="form-control" name="description" rows="3"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">担当者</label>
-                        <select class="form-select" name="assignee_id">
-                            <option value="">未割り当て</option>
-                            {% for user in users %}
-                            <option value="{{ user.id }}">{{ user.first_name }} {{ user.last_name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">優先度</label>
-                        <select class="form-select" name="priority">
-                            <option value="0">None</option>
-                            <option value="1">Low</option>
-                            <option value="2">Medium</option>
-                            <option value="3">High</option>
-                            <option value="4">Highest</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">ストーリーポイント</label>
-                        <input type="number" class="form-control" name="story_points" min="0">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
-                    <button type="submit" class="btn btn-primary">作成</button>
-                </div>
-            </form>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">ストーリーの追加</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <form id="createStoryForm" onsubmit="return createStory(event)">
+        <div class="modal-body">
+          <input
+            type="hidden"
+            name="project_id"
+            value="{{ current_project.id if current_project else '' }}"
+          />
+          <div class="mb-3">
+            <label class="form-label">タイトル</label>
+            <input type="text" class="form-control" name="title" required />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">説明</label>
+            <textarea
+              class="form-control"
+              name="description"
+              rows="3"
+            ></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">担当者</label>
+            <select class="form-select" name="assignee_id">
+              <option value="">未割り当て</option>
+              {% for user in users %}
+              <option value="{{ user.id }}">
+                {{ user.first_name }} {{ user.last_name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">優先度</label>
+            <select class="form-select" name="priority">
+              <option value="0">None</option>
+              <option value="1">Low</option>
+              <option value="2">Medium</option>
+              <option value="3">High</option>
+              <option value="4">Highest</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">ストーリーポイント</label>
+            <input
+              type="number"
+              class="form-control"
+              name="story_points"
+              min="0"
+            />
+          </div>
         </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            キャンセル
+          </button>
+          <button type="submit" class="btn btn-primary">作成</button>
+        </div>
+      </form>
     </div>
+  </div>
 </div>
 
 <!-- ストーリー編集モーダル -->
 <div class="modal fade" id="editStoryModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">ストーリーの編集</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="editStoryForm" onsubmit="return updateStory(event)">
-                <div class="modal-body">
-                    <input type="hidden" id="editStoryId" name="story_id">
-                    <div class="mb-3">
-                        <label class="form-label">タイトル</label>
-                        <input type="text" class="form-control" id="editStoryTitle" name="title" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">説明</label>
-                        <textarea class="form-control" id="editStoryDescription" name="description" rows="3"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">担当者</label>
-                        <select class="form-select" id="editStoryAssignee" name="assignee_id">
-                            <option value="">未割り当て</option>
-                            {% for user in users %}
-                            <option value="{{ user.id }}">{{ user.first_name }} {{ user.last_name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">優先度</label>
-                        <select class="form-select" id="editStoryPriority" name="priority">
-                            <option value="0">None</option>
-                            <option value="1">Low</option>
-                            <option value="2">Medium</option>
-                            <option value="3">High</option>
-                            <option value="4">Highest</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">ストーリーポイント</label>
-                        <input type="number" class="form-control" id="editStoryPoints" name="story_points" min="0">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
-                    <button type="submit" class="btn btn-primary">保存</button>
-                </div>
-            </form>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">ストーリーの編集</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <form id="editStoryForm" onsubmit="return updateStory(event)">
+        <div class="modal-body">
+          <input type="hidden" id="editStoryId" name="story_id" />
+          <div class="mb-3">
+            <label class="form-label">タイトル</label>
+            <input
+              type="text"
+              class="form-control"
+              id="editStoryTitle"
+              name="title"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">説明</label>
+            <textarea
+              class="form-control"
+              id="editStoryDescription"
+              name="description"
+              rows="3"
+            ></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">担当者</label>
+            <select
+              class="form-select"
+              id="editStoryAssignee"
+              name="assignee_id"
+            >
+              <option value="">未割り当て</option>
+              {% for user in users %}
+              <option value="{{ user.id }}">
+                {{ user.first_name }} {{ user.last_name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">優先度</label>
+            <select class="form-select" id="editStoryPriority" name="priority">
+              <option value="0">None</option>
+              <option value="1">Low</option>
+              <option value="2">Medium</option>
+              <option value="3">High</option>
+              <option value="4">Highest</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">ストーリーポイント</label>
+            <input
+              type="number"
+              class="form-control"
+              id="editStoryPoints"
+              name="story_points"
+              min="0"
+            />
+          </div>
         </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            キャンセル
+          </button>
+          <button type="submit" class="btn btn-primary">保存</button>
+        </div>
+      </form>
     </div>
+  </div>
 </div>
 
 <!-- スプリント作成モーダル -->
 <div class="modal fade" id="createSprintModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">スプリントの作成</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form action="{{ url_for('backlog.create_sprint') }}" method="POST">
-                <div class="modal-body">
-                    <input type="hidden" name="project_id" value="{{ current_project.id if current_project else '' }}">
-                    <div class="mb-3">
-                        <label class="form-label">スプリント名</label>
-                        <input type="text" class="form-control" name="name" value="Sprint {{ (current_project.sprints|length if current_project.sprints else 0) + 1 }}" readonly>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">開始日</label>
-                        <input type="date" class="form-control" name="start_date">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">完了日</label>
-                        <input type="date" class="form-control" name="end_date">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">目標</label>
-                        <textarea class="form-control" name="goal" rows="3" placeholder="このスプリントの目標を入力してください"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
-                    <button type="submit" class="btn btn-primary">作成</button>
-                </div>
-            </form>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">スプリントの作成</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <form action="{{ url_for('backlog.create_sprint') }}" method="POST">
+        <div class="modal-body">
+          <input
+            type="hidden"
+            name="project_id"
+            value="{{ current_project.id if current_project else '' }}"
+          />
+          <div class="mb-3">
+            <label class="form-label">スプリント名</label>
+            <input
+              type="text"
+              class="form-control"
+              name="name"
+              value="Sprint {{ (current_project.sprints|length if current_project.sprints else 0) + 1 }}"
+              readonly
+            />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">開始日</label>
+            <input type="date" class="form-control" name="start_date" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">完了日</label>
+            <input type="date" class="form-control" name="end_date" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">目標</label>
+            <textarea
+              class="form-control"
+              name="goal"
+              rows="3"
+              placeholder="このスプリントの目標を入力してください"
+            ></textarea>
+          </div>
         </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            キャンセル
+          </button>
+          <button type="submit" class="btn btn-primary">作成</button>
+        </div>
+      </form>
     </div>
+  </div>
 </div>
 
-{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+{% endblock %} {% block extra_css %}
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css"
+/>
 <style>
-
-.h5, h5 {
+  .h5,
+  h5 {
     font-size: 1rem;
-}
+  }
 
-.btn-sm {
+  .btn-sm {
     font-size: 0.85rem;
-}
+  }
 
-/* Sprint 和 Backlog 容器样式 */
-.sprint-container, .backlog-container {
+  /* Sprint 和 Backlog 容器样式 */
+  .sprint-container,
+  .backlog-container {
     background-color: transparent;
     margin-bottom: 16px;
-}
+  }
 
-.sprint-header, .backlog-header {
+  .sprint-header,
+  .backlog-header {
     padding: 8px 16px;
     background-color: transparent;
-}
+  }
 
-/* Story 表样式 */
-.story-list {
+  /* Story 表样式 */
+  .story-list {
     min-height: 2px;
     padding: 0;
     border: 1px solid #dfe1e6;
     border-radius: 3px;
     background-color: #fff;
-}
+  }
 
-.story-row {
+  .story-row {
     cursor: move;
     transition: background-color 0.2s;
     border-bottom: 1px solid #dfe1e6;
     padding: 6px 16px;
     margin: 0;
     font-size: 0.9rem;
-    color: #42526E;
-}
+    color: #42526e;
+  }
 
-.story-row:last-child {
+  .story-row:last-child {
     border-bottom: none;
-}
+  }
 
-.story-row:hover {
+  .story-row:hover {
     background-color: #f4f5f7;
-}
+  }
 
-.story-row.dragging {
+  .story-row.dragging {
     background-color: #f4f5f7;
     opacity: 0.8;
-}
+  }
 
-/* Story Points 样式 */
-.story-points {
+  /* Story Points 样式 */
+  .story-points {
     background-color: #dfe1e6;
     border-radius: 12px;
     padding: 1px 8px;
@@ -361,619 +493,654 @@
     color: #42526e;
     min-width: 24px;
     text-align: center;
-}
+  }
 
-/* Story 图标样式 */
-.bi-bookmark-fill {
+  /* Story 图标样式 */
+  .bi-bookmark-fill {
     font-size: 1rem;
-    color: #36B37E !important;
-}
+    color: #36b37e !important;
+  }
 
-/* 按钮样式 */
-.btn-light {
+  /* 按钮样式 */
+  .btn-light {
     background-color: #f4f5f7;
     border-color: #dfe1e6;
     color: #42526e;
     font-weight: 500;
     box-shadow: none;
-}
+  }
 
-.btn-light:hover {
+  .btn-light:hover {
     background-color: #ebecf0;
     border-color: #dfe1e6;
     color: #42526e;
-}
+  }
 
-.btn-sprint {
-    color: #42526E;
-    background-color: #F4F5F7;
+  .btn-sprint {
+    color: #42526e;
+    background-color: #f4f5f7;
     border: none;
     font-size: 12px;
     padding: 6px 12px;
     font-weight: 500;
     line-height: 1;
-}
+  }
 
-.btn-sprint:hover:not(:disabled) {
-    background-color: #EBECF0;
-    color: #42526E;
-}
+  .btn-sprint:hover:not(:disabled) {
+    background-color: #ebecf0;
+    color: #42526e;
+  }
 
-.btn-sprint:disabled {
+  .btn-sprint:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-    background-color: #F4F5F7;
-    color: #A5ADBA;
-}
+    background-color: #f4f5f7;
+    color: #a5adba;
+  }
 
-/* 文字颜色 */
-.text-secondary {
+  /* 文字颜色 */
+  .text-secondary {
     color: #6b778c !important;
-}
+  }
 
-/* Sprint toggle 样式 */
-.sprint-toggle {
+  /* Sprint toggle 样式 */
+  .sprint-toggle {
     transition: transform 0.2s ease;
     color: #6b778c;
     font-size: 1.1em;
-}
+  }
 
-.sprint-toggle:hover {
+  .sprint-toggle:hover {
     color: #42526e;
-}
+  }
 
-/* Badge 样式 */
-.badge {
+  /* Badge 样式 */
+  .badge {
     font-weight: normal;
     font-size: 0.85em;
     padding: 2px 6px;
-}
+  }
 
-.badge.bg-success {
-    background-color: #36B37E !important;
-}
+  .badge.bg-success {
+    background-color: #36b37e !important;
+  }
 
-/* 空态提示 */
-.story-list .text-secondary {
+  /* 空态提示 */
+  .story-list .text-secondary {
     padding: 12px 16px;
     background-color: #fff;
     font-size: 0.9em;
-}
+  }
 
-/* 要内容区域背景色 */
-.main-content {
+  /* 要内容区域背景色 */
+  .main-content {
     background-color: #ffffff;
-}
+  }
 
-/* Sprint 和 Backlog 标题间 */
-.sprint-header, .backlog-header {
+  /* Sprint 和 Backlog 标题间 */
+  .sprint-header,
+  .backlog-header {
     margin-bottom: 8px;
-}
+  }
 
-/* Sprint 部分样式 */
-.sprint-section {
+  /* Sprint 部分样式 */
+  .sprint-section {
     margin-bottom: 24px;
     background-color: transparent;
-}
+  }
 
-.sprint-header {
+  .sprint-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 8px 0;
     margin-bottom: 8px;
-}
+  }
 
-.sprint-title {
+  .sprint-title {
     display: flex;
     align-items: flex-start;
     gap: 8px;
-}
+  }
 
-.sprint-toggle {
+  .sprint-toggle {
     cursor: pointer;
     transition: transform 0.2s;
     padding-top: 2px;
-}
+  }
 
-.sprint-toggle.collapsed {
+  .sprint-toggle.collapsed {
     transform: rotate(-90deg);
-}
+  }
 
-.sprint-info {
-    color: #6B778C;
+  .sprint-info {
+    color: #6b778c;
     font-size: 12px;
-}
+  }
 
-/* 按钮样式 */
-.btn-create-sprint {
+  /* 按钮样式 */
+  .btn-create-sprint {
     display: none;
-}
+  }
 
-/* Backlog 部分样式 */
-.backlog-section {
+  /* Backlog 部分样式 */
+  .backlog-section {
     margin-top: 24px;
-}
+  }
 
-.backlog-header {
+  .backlog-header {
     font-size: 14px;
     font-weight: 500;
-    color: #172B4D;
+    color: #172b4d;
     margin-bottom: 8px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-}
+  }
 
-.backlog-info {
-    color: #6B778C;
+  .backlog-info {
+    color: #6b778c;
     font-size: 12px;
-}
+  }
 
-/* Sprint 日期样式 */
-.sprint-date {
-    color: #6B778C;
+  /* Sprint 日期样式 */
+  .sprint-date {
+    color: #6b778c;
     font-size: 12px;
     font-weight: normal;
     margin-left: 8px;
     margin-right: 8px;
-}
+  }
 
-/* 修改主要内容区域背景色 */
-.main-content {
+  /* 修改主要内容区域背景色 */
+  .main-content {
     background-color: #ffffff;
-}
+  }
 
-/* Sprint 标题样式更新 */
-.sprint-title {
+  /* Sprint 标题样式更新 */
+  .sprint-title {
     display: flex;
     align-items: flex-start;
     gap: 8px;
-}
+  }
 
-.sprint-info-container {
+  .sprint-info-container {
     display: flex;
     flex-direction: column;
     gap: 4px;
-}
+  }
 
-.sprint-name {
+  .sprint-name {
     font-weight: 500;
-    color: #172B4D;
-}
+    color: #172b4d;
+  }
 
-.sprint-info {
-    color: #6B778C;
+  .sprint-info {
+    color: #6b778c;
     font-size: 12px;
-}
+  }
 
-.sprint-goal {
-    color: #6B778C;
+  .sprint-goal {
+    color: #6b778c;
     font-size: 12px;
     font-style: italic;
-}
+  }
 
-.sprint-date {
-    color: #6B778C;
+  .sprint-date {
+    color: #6b778c;
     font-size: 12px;
     font-weight: normal;
-}
+  }
 
-.sprint-toggle {
+  .sprint-toggle {
     cursor: pointer;
     transition: transform 0.2s;
     padding-top: 2px;
-}
+  }
 
-/* 按钮样式更新 */
-.btn-create-sprint {
+  /* 按钮样式更新 */
+  .btn-create-sprint {
     display: none;
-}
+  }
 
-/* 用户头像样式 */
-.user-avatar {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 500;
-}
-
-/* 优先级图标样式 */
-.priority-icon {
+  /* 优先级图标样式 */
+  .priority-icon {
     font-size: 14px;
     font-weight: bold;
     width: 16px;
     text-align: center;
     line-height: 1;
-}
+  }
 
-/* Sprint 状态标记样式 */
-.sprint-status {
+  /* Sprint 状态标记样式 */
+  .sprint-status {
     display: inline-flex;
     align-items: center;
     gap: 4px;
     padding: 2px 8px;
-    background-color: #E3FCEF;
+    background-color: #e3fcef;
     border-radius: 3px;
     color: #006644;
     font-size: 12px;
     font-weight: 500;
-}
+  }
 
-.sprint-status i {
+  .sprint-status i {
     font-size: 12px;
-}
+  }
 
-.status-text {
+  .status-text {
     line-height: 1;
-}
+  }
 
-/* 完成状态样式 */
-.sprint-status.completed {
-    background-color: #EBECF0;
-    color: #42526E;
-}
+  /* 完成状态样式 */
+  .sprint-status.completed {
+    background-color: #ebecf0;
+    color: #42526e;
+  }
 
-/* Story 状态样式 */
-.story-status {
+  /* Story 状态样式 */
+  .story-status {
     font-size: 12px;
     padding: 2px 8px;
     border-radius: 3px;
     margin-left: 8px;
-}
+  }
 
-.status-todo {
-    background-color: #E3FCEF;
+  .status-todo {
+    background-color: #e3fcef;
     color: #006644;
-}
+  }
 
-.status-doing {
-    background-color: #FFEBE6;
-    color: #BF2600;
-}
+  .status-doing {
+    background-color: #ffebe6;
+    color: #bf2600;
+  }
 
-.status-done {
-    background-color: #EBECF0;
-    color: #42526E;
-}
+  .status-done {
+    background-color: #ebecf0;
+    color: #42526e;
+  }
 
-/* 完成状态的文字样式 */
-.story-done .story-title {
+  /* 完成状态的文字样式 */
+  .story-done .story-title {
     text-decoration: line-through !important;
-    color: #6B778C;
+    color: #6b778c;
     opacity: 0.8;
-}
+  }
 
-/* Done 状态的标签也使用删除线 */
-.story-done .story-status {
+  /* Done 状态的标签也使用删除线 */
+  .story-done .story-status {
     text-decoration: line-through !important;
     opacity: 0.8;
-}
+  }
 </style>
-{% endblock %}
-
-{% block extra_js %}
+{% endblock %} {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
-function changeProject(projectId) {
+  function changeProject(projectId) {
     if (projectId) {
-        window.location.href = "{{ url_for('backlog.index') }}/" + projectId;
+      window.location.href = "{{ url_for('backlog.index') }}/" + projectId;
     }
-}
+  }
 
-let isDragging = false;
+  let isDragging = false;
 
-function handleStoryClick(event, id, title, description, points, assigneeId, priority) {
+  function handleStoryClick(
+    event,
+    id,
+    title,
+    description,
+    points,
+    assigneeId,
+    priority
+  ) {
     // ドラッグ中の場合はクリックイベントを無視
     if (isDragging) {
-        isDragging = false;
-        return;
+      isDragging = false;
+      return;
     }
     editStory(id, title, description, points, assigneeId, priority);
-}
+  }
 
-// ドラッグ&ドロップの設定
-document.addEventListener('DOMContentLoaded', function() {
+  // ドラッグ&ドロップの設定
+  document.addEventListener("DOMContentLoaded", function () {
     // 全ての story-list に対して Sortable を適用
-    const storyLists = document.querySelectorAll('.story-list');
-    
-    storyLists.forEach(list => {
-        const sprintSection = list.closest('.sprint-section');
-        const isCompleted = sprintSection && sprintSection.querySelector('.sprint-status.completed');
-        
-        // 如果是已完成的Sprint，默认关闭并禁用拖拽
-        if (isCompleted) {
-            list.style.display = 'none';
-            const toggle = sprintSection.querySelector('.sprint-toggle');
-            if (toggle) {
-                toggle.classList.add('collapsed');
-            }
-            return;
+    const storyLists = document.querySelectorAll(".story-list");
+
+    storyLists.forEach((list) => {
+      const sprintSection = list.closest(".sprint-section");
+      const isCompleted =
+        sprintSection &&
+        sprintSection.querySelector(".sprint-status.completed");
+
+      // 如果是已完成的Sprint，默认关闭并禁用拖拽
+      if (isCompleted) {
+        list.style.display = "none";
+        const toggle = sprintSection.querySelector(".sprint-toggle");
+        if (toggle) {
+          toggle.classList.add("collapsed");
         }
-        
-        new Sortable(list, {
-            group: 'stories',
-            animation: 150,
-            ghostClass: 'dragging',
-            // 完成的Sprint不允许拖入
-            pull: function(sortable, target, dragEl) {
-                const targetSprintSection = target.closest('.sprint-section');
-                return !targetSprintSection || !targetSprintSection.querySelector('.sprint-status.completed');
-            },
-            put: function(sortable, target, dragEl) {
-                const targetSprintSection = target.closest('.sprint-section');
-                return !targetSprintSection || !targetSprintSection.querySelector('.sprint-status.completed');
-            },
-            onStart: function() {
-                isDragging = true;
-            },
-            onEnd: function(evt) {
-                const storyId = evt.item.dataset.storyId;
-                // 移動先のスプリントIDを取得
-                let toSprintId = '';
-                const sprintSection = evt.to.closest('.sprint-section');
-                if (sprintSection) {
-                    const sprintContent = evt.to.id;
-                    toSprintId = sprintContent.replace('sprint-', '');
-                }
-                
-                fetch("{{ url_for('backlog.move_story', story_id=0) }}".replace('0', storyId), {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `sprint_id=${toSprintId}`
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        // 移動元と移動先の件数を更新
-                        const fromSprintSection = evt.from.closest('.sprint-section');
-                        const toSprintSection = evt.to.closest('.sprint-section');
-                        
-                        // 動元の件数を更新
-                        if (fromSprintSection) {
-                            updateSprintCount(fromSprintSection);
-                        } else {
-                            updateBacklogCount();
-                        }
-                        
-                        // 移動先の件数を更新
-                        if (toSprintSection) {
-                            updateSprintCount(toSprintSection);
-                        } else {
-                            updateBacklogCount();
-                        }
-                    } else {
-                        location.reload();
-                    }
-                })
-                .catch(() => {
-                    location.reload();
-                });
+        return;
+      }
+
+      new Sortable(list, {
+        group: "stories",
+        animation: 150,
+        ghostClass: "dragging",
+        // 完成的Sprint不允许拖入
+        pull: function (sortable, target, dragEl) {
+          const targetSprintSection = target.closest(".sprint-section");
+          return (
+            !targetSprintSection ||
+            !targetSprintSection.querySelector(".sprint-status.completed")
+          );
+        },
+        put: function (sortable, target, dragEl) {
+          const targetSprintSection = target.closest(".sprint-section");
+          return (
+            !targetSprintSection ||
+            !targetSprintSection.querySelector(".sprint-status.completed")
+          );
+        },
+        onStart: function () {
+          isDragging = true;
+        },
+        onEnd: function (evt) {
+          const storyId = evt.item.dataset.storyId;
+          // 移動先のスプリントIDを取得
+          let toSprintId = "";
+          const sprintSection = evt.to.closest(".sprint-section");
+          if (sprintSection) {
+            const sprintContent = evt.to.id;
+            toSprintId = sprintContent.replace("sprint-", "");
+          }
+
+          fetch(
+            "{{ url_for('backlog.move_story', story_id=0) }}".replace(
+              "0",
+              storyId
+            ),
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: `sprint_id=${toSprintId}`,
             }
-        });
+          )
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.status === "success") {
+                // 移動元と移動先の件数を更新
+                const fromSprintSection = evt.from.closest(".sprint-section");
+                const toSprintSection = evt.to.closest(".sprint-section");
+
+                // 動元の件数を更新
+                if (fromSprintSection) {
+                  updateSprintCount(fromSprintSection);
+                } else {
+                  updateBacklogCount();
+                }
+
+                // 移動先の件数を更新
+                if (toSprintSection) {
+                  updateSprintCount(toSprintSection);
+                } else {
+                  updateBacklogCount();
+                }
+              } else {
+                location.reload();
+              }
+            })
+            .catch(() => {
+              location.reload();
+            });
+        },
+      });
     });
-});
+  });
 
-// Sprint の件数を更新
-function updateSprintCount(sprintSection) {
-    const countSpan = sprintSection.querySelector('.sprint-info');
+  // Sprint の件数を更新
+  function updateSprintCount(sprintSection) {
+    const countSpan = sprintSection.querySelector(".sprint-info");
     if (countSpan) {
-        const count = sprintSection.querySelector('.story-list').children.length;
-        countSpan.textContent = `${count}件`;
+      const count = sprintSection.querySelector(".story-list").children.length;
+      countSpan.textContent = `${count}件`;
     }
-}
+  }
 
-// Backlog の件数を更新
-function updateBacklogCount() {
-    const countSpan = document.querySelector('.backlog-info');
+  // Backlog の件数を更新
+  function updateBacklogCount() {
+    const countSpan = document.querySelector(".backlog-info");
     if (countSpan) {
-        const count = document.querySelector('.backlog-section .story-list').children.length;
-        countSpan.textContent = `${count}件`;
+      const count = document.querySelector(".backlog-section .story-list")
+        .children.length;
+      countSpan.textContent = `${count}件`;
     }
-}
+  }
 
-function editStory(id, title, description, points, assigneeId, priority) {
+  function editStory(id, title, description, points, assigneeId, priority) {
     // HTMLエスペープを解除
-    const div = document.createElement('div');
+    const div = document.createElement("div");
     div.innerHTML = description;
     description = div.textContent;
 
-    document.getElementById('editStoryId').value = id;
-    document.getElementById('editStoryTitle').value = title;
-    document.getElementById('editStoryDescription').value = description;
-    document.getElementById('editStoryPoints').value = points;
-    document.getElementById('editStoryAssignee').value = assigneeId || '';
-    document.getElementById('editStoryPriority').value = priority || 0;
-    
-    const editModal = new bootstrap.Modal(document.getElementById('editStoryModal'));
+    document.getElementById("editStoryId").value = id;
+    document.getElementById("editStoryTitle").value = title;
+    document.getElementById("editStoryDescription").value = description;
+    document.getElementById("editStoryPoints").value = points;
+    document.getElementById("editStoryAssignee").value = assigneeId || "";
+    document.getElementById("editStoryPriority").value = priority || 0;
+
+    const editModal = new bootstrap.Modal(
+      document.getElementById("editStoryModal")
+    );
     editModal.show();
-}
+  }
 
-function updateStory(event) {
+  function updateStory(event) {
     event.preventDefault();
     const form = event.target;
-    const storyId = document.getElementById('editStoryId').value;
-    
+    const storyId = document.getElementById("editStoryId").value;
+
     const formData = new FormData(form);
     const data = {
-        title: formData.get('title'),
-        description: formData.get('description'),
-        story_points: parseInt(formData.get('story_points')) || 0,
-        assignee_id: formData.get('assignee_id') ? parseInt(formData.get('assignee_id')) : null,
-        priority: parseInt(formData.get('priority')) || 0
+      title: formData.get("title"),
+      description: formData.get("description"),
+      story_points: parseInt(formData.get("story_points")) || 0,
+      assignee_id: formData.get("assignee_id")
+        ? parseInt(formData.get("assignee_id"))
+        : null,
+      priority: parseInt(formData.get("priority")) || 0,
     };
-    
-    fetch(`{{ url_for('backlog.update_story', story_id=0) }}`.replace('0', storyId), {
-        method: 'POST',
+
+    fetch(
+      `{{ url_for('backlog.update_story', story_id=0) }}`.replace("0", storyId),
+      {
+        method: "POST",
         headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token() if csrf_token else "" }}'
+          "Content-Type": "application/json",
+          "X-CSRFToken": '{{ csrf_token() if csrf_token else "" }}',
         },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'success') {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('editStoryModal'));
-            modal.hide();
-            window.location.reload();
+        body: JSON.stringify(data),
+      }
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.status === "success") {
+          const modal = bootstrap.Modal.getInstance(
+            document.getElementById("editStoryModal")
+          );
+          modal.hide();
+          window.location.reload();
         } else {
-            alert(data.message || 'ストーリーの更新に失敗しました');
+          alert(data.message || "ストーリーの更新に失敗しました");
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('ストーリーの更新に失敗しました');
-    });
-    
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        alert("ストーリーの更新に失敗しました");
+      });
+
     return false;
-}
+  }
 
-// Sprint 展开/收缩功能
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.sprint-toggle').forEach(toggle => {
-        toggle.addEventListener('click', function(e) {
-            const sprintId = this.dataset.sprintId;
-            const storyList = this.closest('.sprint-container').querySelector('.story-list');
-            const isCollapsed = this.classList.contains('collapsed');
-            
-            if (isCollapsed) {
-                // 展开
-                storyList.style.display = 'block';
-                this.classList.remove('collapsed');
-                this.classList.remove('bi-chevron-right');
-                this.classList.add('bi-chevron-down');
-            } else {
-                // 收缩
-                storyList.style.display = 'none';
-                this.classList.add('collapsed');
-                this.classList.remove('bi-chevron-down');
-                this.classList.add('bi-chevron-right');
-            }
-        });
+  // Sprint 展开/收缩功能
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".sprint-toggle").forEach((toggle) => {
+      toggle.addEventListener("click", function (e) {
+        const sprintId = this.dataset.sprintId;
+        const storyList =
+          this.closest(".sprint-container").querySelector(".story-list");
+        const isCollapsed = this.classList.contains("collapsed");
+
+        if (isCollapsed) {
+          // 展开
+          storyList.style.display = "block";
+          this.classList.remove("collapsed");
+          this.classList.remove("bi-chevron-right");
+          this.classList.add("bi-chevron-down");
+        } else {
+          // 收缩
+          storyList.style.display = "none";
+          this.classList.add("collapsed");
+          this.classList.remove("bi-chevron-down");
+          this.classList.add("bi-chevron-right");
+        }
+      });
     });
-});
+  });
 
-function toggleSprint(icon, sprintId) {
+  function toggleSprint(icon, sprintId) {
     const content = document.getElementById(sprintId);
-    const isCollapsed = icon.classList.contains('collapsed');
-    
+    const isCollapsed = icon.classList.contains("collapsed");
+
     if (isCollapsed) {
-        icon.classList.remove('collapsed');
-        content.style.display = 'block';
+      icon.classList.remove("collapsed");
+      content.style.display = "block";
     } else {
-        icon.classList.add('collapsed');
-        content.style.display = 'none';
+      icon.classList.add("collapsed");
+      content.style.display = "none";
     }
-}
+  }
 
-function startSprint(sprintId) {
-    fetch(`{{ url_for('backlog.start_sprint_api', sprint_id=0) }}`.replace('0', sprintId), {
-        method: 'POST',
+  function startSprint(sprintId) {
+    fetch(
+      `{{ url_for('backlog.start_sprint_api', sprint_id=0) }}`.replace(
+        "0",
+        sprintId
+      ),
+      {
+        method: "POST",
         headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token() if csrf_token else "" }}'
+          "Content-Type": "application/json",
+          "X-CSRFToken": '{{ csrf_token() if csrf_token else "" }}',
         },
-        body: JSON.stringify({})
-    })
-    .then(response => {
+        body: JSON.stringify({}),
+      }
+    )
+      .then((response) => {
         if (!response.ok) {
-            return response.json().then(data => {
-                throw new Error(data.error || 'スプリントの開始に失敗しました');
-            });
+          return response.json().then((data) => {
+            throw new Error(data.error || "スプリントの開始に失敗しました");
+          });
         }
         return response.json();
-    })
-    .then(data => {
-        console.log('Response:', data);  // 添加日志
-        if (data.status === 'success') {
-            window.location.href = window.location.href;
+      })
+      .then((data) => {
+        console.log("Response:", data); // 添加日志
+        if (data.status === "success") {
+          window.location.href = window.location.href;
         } else {
-            throw new Error(data.error || 'スプリントの開始に失敗しました');
+          throw new Error(data.error || "スプリントの開始に失敗しました");
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert(error.message || 'スプリントの開始に敗しまし���');
-    });
-}
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        alert(error.message || "スプリントの開始に敗しました");
+      });
+  }
 
-function completeSprint(sprintId) {
-    fetch(`{{ url_for('backlog.complete_sprint_api', sprint_id=0) }}`.replace('0', sprintId), {
-        method: 'POST',
+  function completeSprint(sprintId) {
+    fetch(
+      `{{ url_for('backlog.complete_sprint_api', sprint_id=0) }}`.replace(
+        "0",
+        sprintId
+      ),
+      {
+        method: "POST",
         headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token() if csrf_token else "" }}'
+          "Content-Type": "application/json",
+          "X-CSRFToken": '{{ csrf_token() if csrf_token else "" }}',
         },
-        body: JSON.stringify({})
-    })
-    .then(response => {
+        body: JSON.stringify({}),
+      }
+    )
+      .then((response) => {
         if (!response.ok) {
-            return response.json().then(data => {
-                throw new Error(data.error || 'スプリントの完了に失敗しました');
-            });
+          return response.json().then((data) => {
+            throw new Error(data.error || "スプリントの完了に失敗しました");
+          });
         }
         return response.json();
-    })
-    .then(data => {
-        console.log('Response:', data);  // 添加日志
-        if (data.status === 'success') {
-            window.location.href = window.location.href;
+      })
+      .then((data) => {
+        console.log("Response:", data); // 添加日志
+        if (data.status === "success") {
+          window.location.href = window.location.href;
         } else {
-            throw new Error(data.error || 'スプリントの完了に失敗しました');
+          throw new Error(data.error || "スプリントの完了に失敗しました");
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert(error.message || 'スプリントの完了に失敗しました');
-    });
-}
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        alert(error.message || "スプリントの完了に失敗しました");
+      });
+  }
 
-function createStory(event) {
+  function createStory(event) {
     event.preventDefault();
     const form = event.target;
-    
+
     const formData = new FormData(form);
     const data = {
-        project_id: parseInt(formData.get('project_id')),
-        title: formData.get('title'),
-        description: formData.get('description'),
-        story_points: parseInt(formData.get('story_points')) || 0,
-        assignee_id: formData.get('assignee_id') ? parseInt(formData.get('assignee_id')) : null,
-        priority: parseInt(formData.get('priority')) || 0
+      project_id: parseInt(formData.get("project_id")),
+      title: formData.get("title"),
+      description: formData.get("description"),
+      story_points: parseInt(formData.get("story_points")) || 0,
+      assignee_id: formData.get("assignee_id")
+        ? parseInt(formData.get("assignee_id"))
+        : null,
+      priority: parseInt(formData.get("priority")) || 0,
     };
-    
+
     fetch('{{ url_for("backlog.create_story") }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token() if csrf_token else "" }}'
-        },
-        body: JSON.stringify(data)
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": '{{ csrf_token() if csrf_token else "" }}',
+      },
+      body: JSON.stringify(data),
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'success') {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('createStoryModal'));
-            modal.hide();
-            window.location.reload();
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.status === "success") {
+          const modal = bootstrap.Modal.getInstance(
+            document.getElementById("createStoryModal")
+          );
+          modal.hide();
+          window.location.reload();
         } else {
-            alert(data.message || 'ストーリーの作成に失敗しました');
+          alert(data.message || "ストーリーの作成に失敗しました");
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('ストーリーの作成に失敗しました');
-    });
-    
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        alert("ストーリーの作成に失敗しました");
+      });
+
     return false;
-}
+  }
 </script>
-{% endblock %} 
+{% endblock %}

@@ -263,17 +263,22 @@
             align-items: center;
         }
 
+        /* User avatar styles */
         .user-avatar {
-            width: 32px;
-            height: 32px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
-            background-color: #0052CC;
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 500;
+        }
+
+        /* Sidebar avatar variant */
+        .sidebar-avatar {
+            --avatar-size: 32px;
         }
 
         .user-name {
@@ -377,7 +382,7 @@
                     <div class="d-flex align-items-center justify-content-between">
                         {% if current_user.is_authenticated %}
                         <div class="user-info-left">
-                            <div class="user-avatar" style="background-color: {{ current_user.avatar_color }}">
+                            <div class="user-avatar sidebar-avatar" style="background-color: {{ current_user.avatar_color }}">
                                 {% if current_user.username|length >= 2 %}
                                     {{ current_user.username[:2].upper() }}
                                 {% else %}

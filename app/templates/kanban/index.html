@@ -44,7 +44,7 @@
             </div>
             {% if story.assignee %}
             <div
-              class="user-avatar"
+              class="user-avatar user-avatar-sm"
               style="background-color: {{ story.assignee.avatar_color }}"
             >
               {{ story.assignee.username[:2].upper() }}
@@ -83,7 +83,7 @@
             </div>
             {% if story.assignee %}
             <div
-              class="user-avatar"
+              class="user-avatar user-avatar-sm"
               style="background-color: {{ story.assignee.avatar_color }}"
             >
               {{ story.assignee.username[:2].upper() }}
@@ -122,7 +122,7 @@
             </div>
             {% if story.assignee %}
             <div
-              class="user-avatar"
+              class="user-avatar user-avatar-sm"
               style="background-color: {{ story.assignee.avatar_color }}"
             >
               {{ story.assignee.username[:2].upper() }}
@@ -238,18 +238,6 @@
     color: #42526e;
     min-width: 24px;
     text-align: center;
-  }
-
-  .user-avatar {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 12px;
-    font-weight: 500;
   }
 
   .kanban-header {
