@@ -30,6 +30,8 @@ jobs:
 
       - name: Start application
         run: |
+          flask db upgrade
+          flask init-db
           nohup flask run &
 
       - name: Run Pytest
