@@ -1,12 +1,12 @@
+from datetime import datetime, timedelta
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
 from flask_login import login_required, current_user
+from sqlalchemy import case  # noqa: F401
+from app import db, logger
 from app.models.project import Project
 from app.models.story import Story
 from app.models.sprint import Sprint
 from app.models.user import User
-from app import db, logger
-from datetime import datetime, timedelta
-from sqlalchemy import case
 
 bp = Blueprint("backlog", __name__)
 
@@ -146,6 +146,56 @@ def create_story():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
+def _update_story_from_json(story, data):
+    """JSONデータからストーリーを更新"""
+    story.title = data.get("title", story.title)
+    story.description = data.get("description", story.description)
+    story.story_points = data.get("story_points", story.story_points)
+    story.assignee_id = data.get("assignee_id") if data.get("assignee_id") else None
+    story.priority = data.get("priority", 0)
+
+
+def _update_story_from_form(story, form):
+    """フォームデータからストーリーを更新"""
+    story.title = form.get("title", story.title)
+    story.description = form.get("description", story.description)
+    story.story_points = form.get("story_points", story.story_points, type=int)
+    story.assignee_id = form.get("assignee_id", type=int)
+    story.priority = form.get("priority", 0, type=int)
+
+
+def _track_story_changes(story, old_values):
+    """ストーリーの変更を追跡"""
+    changes = []
+
+    if story.title != old_values["title"]:
+        changes.append(f"title: {old_values['title']} -> {story.title}")
+
+    if story.description != old_values["description"]:
+        changes.append("description updated")
+
+    if story.story_points != old_values["story_points"]:
+        changes.append(
+            f"story points: {old_values['story_points']} -> {story.story_points}"
+        )
+
+    if story.assignee_id != old_values["assignee_id"]:
+        old_assignee = (
+            User.query.get(old_values["assignee_id"])
+            if old_values["assignee_id"]
+            else None
+        )
+        new_assignee = User.query.get(story.assignee_id) if story.assignee_id else None
+        old_name = old_assignee.username if old_assignee else "None"
+        new_name = new_assignee.username if new_assignee else "None"
+        changes.append(f"assignee: {old_name} -> {new_name}")
+
+    if story.priority != old_values["priority"]:
+        changes.append(f"priority: {old_values['priority']} -> {story.priority}")
+
+    return changes
+
+
 @bp.route("/backlog/story/<int:story_id>/update", methods=["POST"])
 @login_required
 def update_story(story_id):
@@ -153,10 +203,11 @@ def update_story(story_id):
     try:
         story = Story.query.get_or_404(story_id)
         logger.info(
-            f"Story update requested by {current_user.username} - ID: {story_id}, Title: {story.title}"
+            f"Story update requested by {current_user.username} - "
+            f"ID: {story_id}, Title: {story.title}"
         )
 
-        # 记录原始值用于比较
+        # 元の値を保存
         old_values = {
             "title": story.title,
             "description": story.description,
@@ -165,51 +216,14 @@ def update_story(story_id):
             "priority": story.priority,
         }
 
+        # データ形式に応じて更新
         if request.is_json:
-            data = request.get_json()
-            story.title = data.get("title", story.title)
-            story.description = data.get("description", story.description)
-            story.story_points = data.get("story_points", story.story_points)
-            story.assignee_id = (
-                data.get("assignee_id") if data.get("assignee_id") else None
-            )
-            story.priority = data.get("priority", 0)
+            _update_story_from_json(story, request.get_json())
         else:
-            logger.warning(
-                f"Non-JSON request received for story update - ID: {story_id}"
-            )
-            story.title = request.form.get("title", story.title)
-            story.description = request.form.get("description", story.description)
-            story.story_points = request.form.get(
-                "story_points", story.story_points, type=int
-            )
-            story.assignee_id = request.form.get("assignee_id", type=int)
-            story.priority = request.form.get("priority", 0, type=int)
+            _update_story_from_form(story, request.form)
 
-        # 记录变更
-        changes = []
-        if story.title != old_values["title"]:
-            changes.append(f"title: {old_values['title']} -> {story.title}")
-        if story.description != old_values["description"]:
-            changes.append("description updated")
-        if story.story_points != old_values["story_points"]:
-            changes.append(
-                f"story points: {old_values['story_points']} -> {story.story_points}"
-            )
-        if story.assignee_id != old_values["assignee_id"]:
-            old_assignee = (
-                User.query.get(old_values["assignee_id"])
-                if old_values["assignee_id"]
-                else None
-            )
-            new_assignee = (
-                User.query.get(story.assignee_id) if story.assignee_id else None
-            )
-            changes.append(
-                f"assignee: {old_assignee.username if old_assignee else 'None'} -> {new_assignee.username if new_assignee else 'None'}"
-            )
-        if story.priority != old_values["priority"]:
-            changes.append(f"priority: {old_values['priority']} -> {story.priority}")
+        # 変更を追跡
+        changes = _track_story_changes(story, old_values)
 
         try:
             db.session.commit()
@@ -319,13 +333,17 @@ def start_sprint():
         old_status = sprint.status
         sprint.status = "active"
         sprint.start_date = datetime.now()
-        sprint.end_date = sprint.start_date + timedelta(days=14)  # 默认2周
+        # デフォルトで2週間のスプリント期間を設定
+        sprint.end_date = sprint.start_date + timedelta(days=14)
 
         try:
             db.session.commit()
-            logger.info(
-                f"Sprint started successfully - Status changed: {old_status} -> active, Duration: {sprint.start_date} to {sprint.end_date}"
+            status_msg = (
+                f"Sprint started successfully - "
+                f"Status changed: {old_status} -> active, "
+                f"Duration: {sprint.start_date} to {sprint.end_date}"
             )
+            logger.info(status_msg)
             flash("スプリントが開始されました", "success")
             return redirect(url_for("backlog.index"))
         except Exception as e:
@@ -426,7 +444,8 @@ def create_sprint_api():
         except Exception as e:
             db.session.rollback()
             logger.error(
-                f"Database error while creating sprint via API: {str(e)}", exc_info=True
+                "Database error while creating sprint via API: " f"{str(e)}",
+                exc_info=True,
             )
             return jsonify({"error": str(e)}), 500
     except Exception as e:
@@ -468,7 +487,8 @@ def start_sprint_api(sprint_id):
 
         if earlier_sprints:
             logger.warning(
-                f"Cannot start sprint - Earlier sprints are not completed: {earlier_sprints.name}"
+                "Cannot start sprint - Earlier sprints are not completed: "
+                f"{earlier_sprints.name}"
             )
             return jsonify({"status": "error", "error": "前のスプリントが完了していません"}), 400
 
@@ -481,7 +501,8 @@ def start_sprint_api(sprint_id):
         try:
             db.session.commit()
             logger.info(
-                f"Sprint started successfully via API - Status changed: {old_status} -> active, Duration: {sprint.start_date} to {sprint.end_date}"
+                f"Sprint started via API - Status: {old_status} -> active, "
+                f"Duration: {sprint.start_date} to {sprint.end_date}"
             )
             return jsonify({"status": "success", "sprint": sprint.to_dict()})
         except Exception as e:
@@ -518,7 +539,8 @@ def complete_sprint_api(sprint_id):
         )
 
         logger.info(
-            f"Sprint completion stats - Total stories: {total_stories}, Completed: {completed_stories}, Rate: {completion_rate:.1f}%"
+            f"Sprint completion stats - Total stories: {total_stories}, "
+            f"Completed: {completed_stories}, Rate: {completion_rate:.1f}%"
         )
 
         # 记录Sprint状态变更
@@ -529,7 +551,8 @@ def complete_sprint_api(sprint_id):
         try:
             db.session.commit()
             logger.info(
-                f"Sprint completed successfully - Status changed: {old_status} -> completed, Completion time: {sprint.completed_at}"
+                f"Sprint completed successfully - Status changed: {old_status} -> completed, "
+                f"Completion time: {sprint.completed_at}"
             )
             return jsonify(
                 {

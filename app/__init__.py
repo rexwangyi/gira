@@ -1,10 +1,15 @@
-import os
+# 標準ライブラリ
 import logging
+import os
 from logging.handlers import RotatingFileHandler
+
+# サードパーティライブラリ
 from flask import Flask, redirect, url_for
-from config import Config
-from app.extensions import db, migrate, login_manager
 from flask_login import login_required
+
+# ローカルアプリケーション
+from app.extensions import db, login_manager, migrate
+from config import Config
 
 # ロガーの設定
 logger = logging.getLogger("gira")
@@ -17,7 +22,7 @@ def create_app(test_config=None):
     if test_config is None:
         app.config.from_object(Config)
     else:
-        # 如果传入了测试配置，使用测试配置
+        # テスト設定が提供された場合は、それを使用
         app.config.from_object(test_config)
 
     # 拡張機能の初期化
@@ -33,11 +38,10 @@ def create_app(test_config=None):
             app.config["LOG_FILE"],
             maxBytes=app.config["LOG_MAX_BYTES"],
             backupCount=app.config["LOG_BACKUP_COUNT"],
-            encoding='utf-8'
+            encoding="utf-8",
         )
         formatter = logging.Formatter(
-            fmt=app.config["LOG_FORMAT"],
-            datefmt=app.config["LOG_DATE_FORMAT"]
+            fmt=app.config["LOG_FORMAT"], datefmt=app.config["LOG_DATE_FORMAT"]
         )
         file_handler.setFormatter(formatter)
         file_handler.setLevel(app.config["LOG_LEVEL"])
@@ -51,18 +55,19 @@ def create_app(test_config=None):
     logger.info("GIRA application startup")
 
     # Blueprintの登録
-    from app.views import auth, main, backlog, kanban, project
+    from app.views import auth, main, backlog, kanban
+    from app.views import project as project_views  # 名前を変更してインポート
 
-    # 先注册认证相关路由
+    # 認証関連ルートを先に登録
     app.register_blueprint(auth.bp)
 
-    # 然后注册其他路由
+    # その他のルートを登録
     app.register_blueprint(main.bp)
     app.register_blueprint(backlog.bp)
     app.register_blueprint(kanban.bp, url_prefix="/kanban")
-    app.register_blueprint(project.bp, url_prefix="")
+    app.register_blueprint(project_views.bp, url_prefix="")  # 変更した名前を使用
 
-    # 添加根路由重定向到 backlog
+    # ルートパスをbacklogにリダイレクト
     @app.route("/")
     @login_required
     def index():
@@ -76,5 +81,6 @@ def create_app(test_config=None):
     return app
 
 
-# モデルの読み込み
-from app.models import user, project, story, sprint
+# 循環インポートを避けるためにモデルを最後にインポート
+# noqa: F401は未使用インポートの警告を抑制
+from app.models import user, project, story, sprint  # noqa: F401

@@ -1,14 +1,7 @@
-from app.models.user import User
-from app.models.project import Project
-from app.models.story import Story
-from app.models.sprint import Sprint
-from app.views import kanban
+from app.models.user import User  # noqa: F401
+from app.models.project import Project  # noqa: F401
+from app.models.story import Story  # noqa: F401
+from app.models.sprint import Sprint  # noqa: F401
 
-
-def create_app(config_name):
-    # 现有代码...
-
-    # 注册Blueprint
-    app.register_blueprint(kanban.bp, url_prefix="/kanban")
-
-    # 现有代码...
+# 全てのモデルをここでエクスポートする
+__all__ = ["User", "Project", "Story", "Sprint"]

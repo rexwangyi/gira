@@ -98,103 +98,83 @@ def index(project_id=None):
         return jsonify({"error": str(e)}), 500
 
 
+def _validate_story_status(new_status):
+    """ストーリーのステータスを検証"""
+    valid_statuses = [Story.KANBAN_TODO, Story.KANBAN_DOING, Story.KANBAN_DONE]
+    if new_status not in valid_statuses:
+        logger.warning(
+            f"Invalid status value requested: {new_status}, "
+            f"Valid values: {valid_statuses}"
+        )
+        return False
+    return True
+
+
+def _update_story_timestamps(story, old_status, new_status):
+    """ストーリーのタイムスタンプを更新"""
+    if new_status == Story.KANBAN_DOING and old_status == Story.KANBAN_TODO:
+        story.started_at = datetime.now()
+        logger.info(f"Story started at: {story.started_at}")
+    elif new_status == Story.KANBAN_DONE:
+        story.completed_at = datetime.now()
+        logger.info(f"Story completed at: {story.completed_at}")
+
+        if story.started_at:
+            processing_time = story.completed_at - story.started_at
+            logger.info(f"Story processing time: {processing_time}")
+        else:
+            logger.warning(f"Story {story.id} was completed without a start time")
+
+
+def _log_story_update(story, sprint, new_status):
+    """ストーリーの更新をログに記録"""
+    logger.info(
+        f"Story status update requested - Story ID: {story.id}, "
+        f"Title: {story.title}, Current Status: {story.status}, "
+        f"New Status: {new_status}, User: {current_user.username}"
+    )
+
+    if sprint:
+        logger.debug(f"Story belongs to sprint: {sprint.name} (ID: {sprint.id})")
+
+
 @bp.route("/api/stories/<int:story_id>/status", methods=["PUT"])
 @login_required
 def update_story_status(story_id):
-    """更新故事状态"""
+    """ストーリーのステータスを更新"""
     try:
         story = Story.query.get_or_404(story_id)
         data = request.get_json()
         new_status = data.get("status")
 
-        logger.info(
-            f"Story status update requested - Story ID: {story_id}, "
-            f"Title: {story.title}, Current Status: {story.status}, "
-            f"New Status: {new_status}, User: {current_user.username}"
-        )
-
-        # 获取Sprint信息用于日志
+        # スプリント情報を取得
         sprint = Sprint.query.get(story.sprint_id) if story.sprint_id else None
-        if sprint:
-            logger.debug(f"Story belongs to sprint: {sprint.name} (ID: {sprint.id})")
 
-        if new_status not in [Story.KANBAN_TODO, Story.KANBAN_DOING, Story.KANBAN_DONE]:
-            logger.warning(
-                f"Invalid status value requested: {new_status}, "
-                f"Valid values: {[Story.KANBAN_TODO, Story.KANBAN_DOING, Story.KANBAN_DONE]}"
-            )
-            return jsonify({"status": "error", "message": "Invalid status value"}), 400
+        # ログを記録
+        _log_story_update(story, sprint, new_status)
+
+        # ステータスを検証
+        if not _validate_story_status(new_status):
+            return jsonify({"status": "error", "message": "無効なステータス値です"}), 400
 
         try:
-            # 记录状态变更
+            # 状態変更を記録
             old_status = story.status
             story.status = new_status
             logger.debug(f"Updating story status from {old_status} to {new_status}")
 
-            # 记录状态变更的时间戳
-            if new_status == Story.KANBAN_DOING and old_status == Story.KANBAN_TODO:
-                story.started_at = datetime.now()
-                logger.info(f"Story started at: {story.started_at}")
-            elif new_status == Story.KANBAN_DONE:
-                story.completed_at = datetime.now()
-                logger.info(f"Story completed at: {story.completed_at}")
-
-                # 如果有开始时间，才计算处理时间
-                if story.started_at:
-                    processing_time = story.completed_at - story.started_at
-                    logger.info(f"Story processing time: {processing_time}")
-                else:
-                    logger.warning(f"Story {story_id} was completed without a start time")
+            # タイムスタンプを更新
+            _update_story_timestamps(story, old_status, new_status)
 
             db.session.commit()
-            logger.debug("Database commit successful")
-
-            # 更新后重新计算Sprint的完成率
-            completion_rate = 0
-            total_stories = 0
-            completed_stories = 0
-            
-            if sprint:
-                sprint_stories = Story.query.filter_by(sprint_id=sprint.id).all()
-                total_stories = len(sprint_stories)
-                completed_stories = len(
-                    [s for s in sprint_stories if s.status == Story.KANBAN_DONE]
-                )
-                completion_rate = (
-                    (completed_stories / total_stories * 100)
-                    if total_stories > 0
-                    else 0
-                )
-                logger.info(
-                    f"Updated sprint progress - Total: {total_stories}, "
-                    f"Completed: {completed_stories}, Rate: {completion_rate:.1f}%"
-                )
-
-            story_dict = story.to_dict()
-            logger.debug(f"Story data for response: {story_dict}")
-
-            response_data = {
-                "status": "success",
-                "story": story_dict,
-                "sprint_stats": {
-                    "total_stories": total_stories,
-                    "completed_stories": completed_stories,
-                    "completion_rate": completion_rate,
-                }
-                if sprint
-                else None,
-            }
-            logger.debug(f"Response data: {response_data}")
-            return jsonify(response_data)
-
+            logger.info(f"Story status updated successfully - ID: {story_id}")
+            return jsonify({"status": "success", "story": story.to_dict()})
         except Exception as e:
             db.session.rollback()
             logger.error(
-                f"Database error while updating story status: {str(e)}", 
-                exc_info=True
+                f"Database error while updating story status: {str(e)}", exc_info=True
             )
             return jsonify({"status": "error", "message": str(e)}), 500
-
     except Exception as e:
         logger.error(f"Error in update_story_status: {str(e)}", exc_info=True)
         return jsonify({"status": "error", "message": str(e)}), 500

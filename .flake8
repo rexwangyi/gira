@@ -1,0 +1,31 @@
+[flake8]
+# 1行の最大文字数
+max-line-length = 120
+
+# 除外するディレクトリ
+exclude = 
+    .git,
+    __pycache__,
+    build,
+    dist,
+    venv,
+    migrations,
+    .pytest_cache,
+    .vscode,
+    instance,
+    htmlcov
+
+# 無視するエラー
+ignore = 
+    # E203: ':'の前後のスペース
+    E203,
+    # W503: 演算子の改行位置
+    W503,
+    # E402: モジュールレベルのインポート位置
+    E402
+
+# 複雑度の最大値
+max-complexity = 10
+
+# インポート順序の設定
+import-order-style = google 

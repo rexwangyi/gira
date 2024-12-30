@@ -1,6 +1,5 @@
-from flask import Blueprint, render_template, jsonify, request, session, current_app
+from flask import Blueprint, render_template, jsonify, request, session
 from flask_login import login_required, current_user
-from sqlalchemy import or_
 from app.models.project import Project
 from app.extensions import db
 from app import logger
@@ -12,11 +11,11 @@ bp = Blueprint("project", __name__)
 @bp.route("/projects/<int:project_id>")
 @login_required
 def index(project_id=None):
-    """项目一览页面"""
+    """プロジェクト一覧ページ"""
     try:
         logger.info(f"User {current_user.username} accessing projects page")
 
-        # 获取当前项目（如果有）
+        # 現在のプロジェクトを取得（存在する場合）
         current_project = None
         if project_id:
             current_project = Project.query.get_or_404(project_id)
@@ -29,7 +28,7 @@ def index(project_id=None):
                     f"Using session project: {current_project.name} (ID: {session['project_id']})"
                 )
 
-        # 获取所有项目用于下拉菜单
+        # ドロップダウンメニュー用に全プロジェクトを取得
         projects = Project.query.filter(Project.status != "deleted").all()
         logger.debug(f"Found {len(projects)} active projects")
 
@@ -44,9 +43,9 @@ def index(project_id=None):
 @bp.route("/api/project/list")
 @login_required
 def list_projects():
-    """获取项目列表API"""
+    """プロジェクトリストAPI"""
     try:
-        # 获取搜索参数
+        # 検索パラメータを取得
         name = request.args.get("name", "")
         status = request.args.get("status", "")
 
@@ -54,7 +53,7 @@ def list_projects():
             f"Project list requested by {current_user.username} - filters: name='{name}', status='{status}'"
         )
 
-        # 获取所有项目（不带过滤条件）
+        # データベース内の全プロジェクトを取得（フィルタリングなし）
         all_projects_query = Project.query
         logger.info(f"All projects SQL: {str(all_projects_query)}")
         all_projects = all_projects_query.all()
@@ -62,10 +61,10 @@ def list_projects():
         for p in all_projects:
             logger.info(f"Project: ID={p.id}, Name={p.name}, Status={p.status}")
 
-        # 构建查询（暂时不过滤状态）
+        # クエリを構築（ステータスフィルタリングは行わない）
         query = Project.query
 
-        # 添加搜索条件
+        # 検索条件を追加
         if name:
             query = query.filter(Project.name.like(f"%{name}%"))
             logger.info(f"Query with name filter: {str(query)}")
@@ -86,16 +85,16 @@ def list_projects():
 @bp.route("/api/project/create", methods=["POST"])
 @login_required
 def create_project():
-    """创建项目API"""
+    """プロジェクト作成API"""
     try:
         data = request.get_json()
         logger.info(
-            f"Project creation requested by {current_user.username} - name: {data.get('name')}"
+            f"Project creation requested by {current_user.username} - name: {data.get('name', '')}"
         )
 
-        # 生成项目key
+        # プロジェクトキーを生成
         last_project_query = Project.query.order_by(Project.id.desc())
-        logger.info(f"Last project SQL: {str(last_project_query)}")
+        logger.info("Last project query: {}".format(str(last_project_query)))
         last_project = last_project_query.first()
         next_id = (last_project.id + 1) if last_project else 1
         key = data.get("key") or f"PRJ-{next_id:04d}"
@@ -124,7 +123,7 @@ def create_project():
 @bp.route("/api/project/update", methods=["POST"])
 @login_required
 def update_project():
-    """更新项目API"""
+    """プロジェクト更新API"""
     try:
         data = request.get_json()
         project = Project.query.get_or_404(data["id"])
@@ -133,16 +132,16 @@ def update_project():
             f"Project update requested by {current_user.username} - ID: {project.id}, Name: {project.name}"
         )
 
-        # 记录变更
+        # 変更を記録
         changes = []
         if project.name != data["name"]:
             changes.append(f"name: {project.name} -> {data['name']}")
         if project.description != data.get("description", ""):
-            changes.append(f"description updated")
+            changes.append("description updated")
         if project.status != data.get("status", "active"):
             changes.append(f"status: {project.status} -> {data.get('status')}")
 
-        # 更新项目
+        # プロジェクトを更新
         project.name = data["name"]
         project.description = data.get("description", "")
         project.status = data.get("status", "active")
@@ -159,7 +158,7 @@ def update_project():
 @bp.route("/api/project/delete", methods=["POST"])
 @login_required
 def delete_project():
-    """删除项目API"""
+    """プロジェクト削除API"""
     try:
         data = request.get_json()
         project = Project.query.get_or_404(data["id"])
@@ -168,7 +167,7 @@ def delete_project():
             f"Project deletion requested by {current_user.username} - ID: {project.id}, Name: {project.name}"
         )
 
-        # 记录项目状态变更
+        # プロジェクトのステータスを変更
         old_status = project.status
         project.status = "deleted"
         db.session.commit()
@@ -186,7 +185,7 @@ def delete_project():
 @bp.route("/projects/<int:project_id>")
 @login_required
 def detail(project_id):
-    """项目详情页面"""
+    """プロジェクト詳細ページ"""
     try:
         project = Project.query.get_or_404(project_id)
         logger.info(
