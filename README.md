@@ -114,6 +114,7 @@ pytest tests/test_backlog.py
 ### マニュアル
 
 - [開発環境のセットアップ](doc/manual/startup.md)
+- [プロンプトの使用方法](doc/manual/prompt_jp.md)
 
 ### 基本設計書
 
