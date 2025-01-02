@@ -75,6 +75,7 @@ def create_app(test_config=None):
 
     # コマンドの登録
     from app import commands
+
     app.cli.add_command(commands.init_db_command)
     app.cli.add_command(commands.create_test_data_command)
 
