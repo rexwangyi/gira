@@ -122,6 +122,7 @@ pytest tests/test_backlog.py
 
 - [開発環境のセットアップ](doc/manual/startup.md)
 - [プロンプトの使用方法](doc/manual/prompt_jp.md)
+- [Gira 開発ガイド](https://rexwangyi.github.io/gira/doc/manual/development_guide.html)
 
 ### 基本設計書
 
