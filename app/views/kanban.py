@@ -14,7 +14,7 @@ bp = Blueprint("kanban", __name__)
 @bp.route("/<int:project_id>")
 @login_required
 def index(project_id=None):
-    """看板首页"""
+    """かんばんボード"""
     try:
         logger.info(f"User {current_user.username} accessing kanban board")
 
@@ -54,7 +54,7 @@ def index(project_id=None):
                     sprint_id=active_sprint.id, status=Story.KANBAN_DONE
                 ).all()
 
-                # 记录每个状态的故事数量和详细信息
+                # 各ステータスのストーリー数と詳細情報を記録
                 logger.debug(
                     f"Stories in TODO: {len(todo_stories)} - IDs: {[s.id for s in todo_stories]}"
                 )
@@ -65,7 +65,7 @@ def index(project_id=None):
                     f"Stories in DONE: {len(done_stories)} - IDs: {[s.id for s in done_stories]}"
                 )
 
-                # 计算完成率
+                # 完了率を計算
                 total_stories = (
                     len(todo_stories) + len(doing_stories) + len(done_stories)
                 )
@@ -155,7 +155,10 @@ def update_story_status(story_id):
 
         # ステータスを検証
         if not _validate_story_status(new_status):
-            return jsonify({"status": "error", "message": "無効なステータス値です"}), 400
+            return (
+                jsonify({"status": "error", "message": "無効なステータス値です"}),
+                400,
+            )
 
         try:
             # 状態変更を記録

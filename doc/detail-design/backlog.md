@@ -18,9 +18,9 @@ graph LR
     A[プロジェクト一覧] --> B[バックログ]
     B --> C[かんばんボード]
 
-    style A fill:#f9f,stroke:#333,stroke-width:2px
-    style B fill:#bbf,stroke:#333,stroke-width:2px
-    style C fill:#bfb,stroke:#333,stroke-width:2px
+    style A stroke:#333,stroke-width:2px
+    style B stroke:#333,stroke-width:2px
+    style C stroke:#333,stroke-width:2px
 ```
 
 ### 1.3 データ I/F
@@ -123,7 +123,7 @@ WHERE project_id = :project_id;
 - 成功時：スプリントセクションに新規スプリントを表示
 - 失敗時：エラーメッセージをモーダル内に表示
 
-#### 3.1.2 スプリント開 ��
+#### 3.1.2 スプリント開始
 
 1. イベント名：Start Sprint ボタン押下
 2. 処理フロー

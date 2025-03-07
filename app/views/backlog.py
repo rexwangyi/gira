@@ -93,7 +93,10 @@ def create_story():
             logger.warning(
                 f"Invalid request format from user {current_user.username} - not JSON"
             )
-            return jsonify({"status": "error", "message": "無効なリクエスト形式です"}), 400
+            return (
+                jsonify({"status": "error", "message": "無効なリクエスト形式です"}),
+                400,
+            )
 
         data = request.get_json()
         project_id = data.get("project_id")
@@ -101,17 +104,25 @@ def create_story():
             logger.warning(
                 f"Story creation attempted without project ID by user {current_user.username}"
             )
-            return jsonify({"status": "error", "message": "プロジェクトが選択されていません"}), 400
+            return (
+                jsonify(
+                    {"status": "error", "message": "プロジェクトが選択されていません"}
+                ),
+                400,
+            )
 
         logger.info(
             f"Story creation requested by {current_user.username} for project ID: {project_id}"
         )
 
-        # 获取项目信息用于日志
+        # ログ用にプロジェクト情報を取得
         project = Project.query.get(project_id)
         if not project:
             logger.error(f"Project not found - ID: {project_id}")
-            return jsonify({"status": "error", "message": "プロジェクトが見つかりません"}), 404
+            return (
+                jsonify({"status": "error", "message": "プロジェクトが見つかりません"}),
+                404,
+            )
 
         story = Story(
             title=data.get("title"),
@@ -122,7 +133,7 @@ def create_story():
             priority=data.get("priority", 0),
         )
 
-        # 记录分配信息
+        # アサイン情報を記録
         if story.assignee_id:
             assignee = User.query.get(story.assignee_id)
             if assignee:
@@ -258,7 +269,12 @@ def move_story(story_id):
             sprint = Sprint.query.get(sprint_id)
             if not sprint:
                 logger.error(f"Target sprint not found - ID: {sprint_id}")
-                return jsonify({"status": "error", "message": "スプリントが見つかりません"}), 404
+                return (
+                    jsonify(
+                        {"status": "error", "message": "スプリントが見つかりません"}
+                    ),
+                    404,
+                )
 
             story.sprint_id = sprint_id
             story.status = Story.KANBAN_TODO
@@ -472,11 +488,17 @@ def start_sprint_api(sprint_id):
             logger.warning(
                 f"Cannot start sprint - Another sprint is active: {active_sprint.name} (ID: {active_sprint.id})"
             )
-            return jsonify({"status": "error", "error": "他のスプリントが進行中です"}), 400
+            return (
+                jsonify({"status": "error", "error": "他のスプリントが進行中です"}),
+                400,
+            )
 
         if sprint.status != "planning":
             logger.warning(f"Cannot start sprint - Invalid status: {sprint.status}")
-            return jsonify({"status": "error", "error": "このスプリントは開始できません"}), 400
+            return (
+                jsonify({"status": "error", "error": "このスプリントは開始できません"}),
+                400,
+            )
 
         # 检查是否有编号更小的未完成 Sprint
         earlier_sprints = Sprint.query.filter(
@@ -490,7 +512,12 @@ def start_sprint_api(sprint_id):
                 "Cannot start sprint - Earlier sprints are not completed: "
                 f"{earlier_sprints.name}"
             )
-            return jsonify({"status": "error", "error": "前のスプリントが完了していません"}), 400
+            return (
+                jsonify(
+                    {"status": "error", "error": "前のスプリントが完了していません"}
+                ),
+                400,
+            )
 
         # 记录Sprint状态变更
         old_status = sprint.status
@@ -528,7 +555,10 @@ def complete_sprint_api(sprint_id):
 
         if sprint.status != "active":
             logger.warning(f"Cannot complete sprint - Invalid status: {sprint.status}")
-            return jsonify({"status": "error", "error": "このスプリントは完了できません"}), 400
+            return (
+                jsonify({"status": "error", "error": "このスプリントは完了できません"}),
+                400,
+            )
 
         # 获取完成情况统计
         stories = Story.query.filter_by(sprint_id=sprint_id).all()

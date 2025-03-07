@@ -9,7 +9,7 @@ bp = Blueprint("main", __name__)
 @bp.route("/")
 @login_required
 def index():
-    """首页"""
+    """トップページ"""
     try:
         logger.info(f"User {current_user.username} accessing home page")
         return redirect(url_for("backlog.index"))

@@ -4,221 +4,168 @@
 
 ```mermaid
 erDiagram
-    USERS ||--o{ STORIES : assigns
-    PROJECTS ||--o{ SPRINTS : contains
-    PROJECTS ||--o{ STORIES : has
-    SPRINTS ||--o{ STORIES : includes
+    User ||--o{ Project : owns
+    User ||--o{ Story : assigned_to
+    Project ||--o{ Sprint : has
+    Project ||--o{ Story : contains
+    Sprint ||--o{ Story : includes
 
-    USERS {
+    User {
         int id PK
-        varchar username UK
-        varchar email UK
-        varchar password_hash
+        string username UK
+        string email UK
+        string first_name
+        string last_name
+        string avatar_color
+        string password_hash
         boolean is_active
-        timestamp created_at
-        timestamp updated_at
+        datetime created_at
+        datetime last_login
     }
 
-    PROJECTS {
+    Project {
         int id PK
-        varchar name
-        varchar key UK
+        string name
+        string key UK
         text description
-        timestamp created_at
-        timestamp updated_at
+        string status
+        int owner_id FK
+        datetime created_at
+        datetime updated_at
     }
 
-    SPRINTS {
+    Sprint {
         int id PK
+        string name
+        datetime start_date
+        datetime end_date
+        string status
         int project_id FK
-        varchar name
-        text goal
-        varchar status
-        date start_date
-        date end_date
-        timestamp created_at
-        timestamp updated_at
+        string goal
+        datetime created_at
+        datetime updated_at
     }
 
-    STORIES {
+    Story {
         int id PK
-        int project_id FK
-        int sprint_id FK
-        varchar title
+        string title
         text description
-        varchar status
+        string status
         int story_points
         int priority
+        int project_id FK
+        int sprint_id FK
         int assignee_id FK
-        timestamp created_at
-        timestamp updated_at
+        datetime created_at
+        datetime updated_at
+        datetime started_at
+        datetime completed_at
     }
 ```
-
-## 1. テーブル一覧
-
-| テーブル名 | 説明             | 補足                   |
-| ---------- | ---------------- | ---------------------- |
-| users      | ユーザー情報     | 認証・認可情報を含む   |
-| projects   | プロジェクト情報 | -                      |
-| sprints    | スプリント情報   | プロジェクトの期間管理 |
-| stories    | ストーリー情報   | タスク・課題管理       |
 
 ## 2. テーブル定義
 
-### 2.1 users
+### 2.1 users（ユーザー）
 
-| カラム        | データ型     | NULL | キー | 初期値 | 説明               |
-| ------------- | ------------ | ---- | ---- | ------ | ------------------ |
-| id            | INTEGER      | NO   | PK   | -      | ユーザー ID        |
-| username      | VARCHAR(50)  | NO   | UQ   | -      | ユーザー名         |
-| email         | VARCHAR(120) | NO   | UQ   | -      | メールアドレス     |
-| password_hash | VARCHAR(128) | NO   | -    | -      | パスワードハッシュ |
-| is_active     | BOOLEAN      | NO   | -    | TRUE   | アクティブフラグ   |
-| created_at    | TIMESTAMP    | NO   | -    | NOW()  | 作成日時           |
-| updated_at    | TIMESTAMP    | NO   | -    | NOW()  | 更新日時           |
+| 物理名        | 論理名             | 型       | 長さ | NULL | キー | 初期値            | 説明                         |
+| ------------- | ------------------ | -------- | ---- | ---- | ---- | ----------------- | ---------------------------- |
+| id            | ID                 | INTEGER  | -    | NO   | PK   | -                 | ユーザー ID                  |
+| username      | ユーザー名         | VARCHAR  | 64   | NO   | UK   | -                 | ログイン用のユーザー名       |
+| email         | メールアドレス     | VARCHAR  | 120  | NO   | UK   | -                 | ログイン用のメールアドレス   |
+| first_name    | 名                 | VARCHAR  | 64   | YES  | -    | -                 | ユーザーの名                 |
+| last_name     | 姓                 | VARCHAR  | 64   | YES  | -    | -                 | ユーザーの姓                 |
+| avatar_color  | アバター色         | VARCHAR  | 7    | YES  | -    | -                 | アバターの背景色（HEX 形式） |
+| password_hash | パスワードハッシュ | VARCHAR  | 128  | YES  | -    | -                 | ハッシュ化されたパスワード   |
+| is_active     | アクティブフラグ   | BOOLEAN  | -    | YES  | -    | TRUE              | アカウントの有効/無効状態    |
+| created_at    | 作成日時           | DATETIME | -    | YES  | -    | CURRENT_TIMESTAMP | アカウント作成日時           |
+| last_login    | 最終ログイン日時   | DATETIME | -    | YES  | -    | -                 | 最後にログインした日時       |
 
-### 2.2 projects
+### 2.2 projects（プロジェクト）
 
-| カラム      | データ型     | NULL | キー | 初期値 | 説明             |
-| ----------- | ------------ | ---- | ---- | ------ | ---------------- |
-| id          | INTEGER      | NO   | PK   | -      | プロジェクト ID  |
-| name        | VARCHAR(100) | NO   | -    | -      | プロジェクト名   |
-| key         | VARCHAR(10)  | NO   | UQ   | -      | プロジェクトキー |
-| description | TEXT         | YES  | -    | NULL   | 説明             |
-| created_at  | TIMESTAMP    | NO   | -    | NOW()  | 作成日時         |
-| updated_at  | TIMESTAMP    | NO   | -    | NOW()  | 更新日時         |
+| 物理名      | 論理名           | 型       | 長さ | NULL | キー | 初期値            | 説明                              |
+| ----------- | ---------------- | -------- | ---- | ---- | ---- | ----------------- | --------------------------------- |
+| id          | ID               | INTEGER  | -    | NO   | PK   | -                 | プロジェクト ID                   |
+| name        | プロジェクト名   | VARCHAR  | 100  | NO   | -    | -                 | プロジェクトの表示名              |
+| key         | プロジェクトキー | VARCHAR  | 10   | NO   | UK   | -                 | プロジェクトの一意の識別子        |
+| description | 説明             | TEXT     | -    | YES  | -    | -                 | プロジェクトの詳細説明            |
+| status      | ステータス       | VARCHAR  | 20   | YES  | -    | 'active'          | プロジェクトの状態                |
+| owner_id    | オーナー ID      | INTEGER  | -    | NO   | FK   | -                 | プロジェクトオーナーのユーザー ID |
+| created_at  | 作成日時         | DATETIME | -    | YES  | -    | CURRENT_TIMESTAMP | プロジェクト作成日時              |
+| updated_at  | 更新日時         | DATETIME | -    | YES  | -    | CURRENT_TIMESTAMP | 最終更新日時                      |
 
-### 2.3 sprints
+### 2.3 sprints（スプリント）
 
-| カラム     | データ型    | NULL | キー | 初期値   | 説明            |
-| ---------- | ----------- | ---- | ---- | -------- | --------------- |
-| id         | INTEGER     | NO   | PK   | -        | スプリント ID   |
-| project_id | INTEGER     | NO   | FK   | -        | プロジェクト ID |
-| name       | VARCHAR(50) | NO   | -    | -        | スプリント名    |
-| goal       | TEXT        | YES  | -    | NULL     | スプリント目標  |
-| status     | VARCHAR(20) | NO   | -    | planning | 状態            |
-| start_date | DATE        | YES  | -    | NULL     | 開始日          |
-| end_date   | DATE        | YES  | -    | NULL     | 終了日          |
-| created_at | TIMESTAMP   | NO   | -    | NOW()    | 作成日時        |
-| updated_at | TIMESTAMP   | NO   | -    | NOW()    | 更新日時        |
+| 物理名     | 論理名          | 型       | 長さ | NULL | キー | 初期値            | 説明                                          |
+| ---------- | --------------- | -------- | ---- | ---- | ---- | ----------------- | --------------------------------------------- |
+| id         | ID              | INTEGER  | -    | NO   | PK   | -                 | スプリント ID                                 |
+| name       | スプリント名    | VARCHAR  | 100  | NO   | -    | -                 | スプリントの表示名                            |
+| start_date | 開始日          | DATETIME | -    | YES  | -    | -                 | スプリント開始日                              |
+| end_date   | 終了日          | DATETIME | -    | YES  | -    | -                 | スプリント終了日                              |
+| status     | ステータス      | VARCHAR  | 20   | YES  | -    | 'planning'        | スプリントの状態（planning/active/completed） |
+| project_id | プロジェクト ID | INTEGER  | -    | NO   | FK   | -                 | 所属プロジェクトの ID                         |
+| goal       | ゴール          | VARCHAR  | 255  | YES  | -    | -                 | スプリントの目標                              |
+| created_at | 作成日時        | DATETIME | -    | YES  | -    | CURRENT_TIMESTAMP | スプリント作成日時                            |
+| updated_at | 更新日時        | DATETIME | -    | YES  | -    | CURRENT_TIMESTAMP | 最終更新日時                                  |
 
-### 2.4 stories
+### 2.4 stories（ストーリー）
 
-| カラム       | データ型     | NULL | キー | 初期値 | 説明            |
-| ------------ | ------------ | ---- | ---- | ------ | --------------- |
-| id           | INTEGER      | NO   | PK   | -      | ストーリー ID   |
-| project_id   | INTEGER      | NO   | FK   | -      | プロジェクト ID |
-| sprint_id    | INTEGER      | YES  | FK   | NULL   | スプリント ID   |
-| title        | VARCHAR(200) | NO   | -    | -      | タイトル        |
-| description  | TEXT         | YES  | -    | NULL   | 説明            |
-| status       | VARCHAR(20)  | NO   | -    | todo   | 状態            |
-| story_points | INTEGER      | YES  | -    | NULL   | ポイント        |
-| priority     | INTEGER      | NO   | -    | 0      | 優先度          |
-| assignee_id  | INTEGER      | YES  | FK   | NULL   | 担当者 ID       |
-| created_at   | TIMESTAMP    | NO   | -    | NOW()  | 作成日時        |
-| updated_at   | TIMESTAMP    | NO   | -    | NOW()  | 更新日時        |
+| 物理名       | 論理名             | 型       | 長さ | NULL | キー | 初期値            | 説明                                   |
+| ------------ | ------------------ | -------- | ---- | ---- | ---- | ----------------- | -------------------------------------- |
+| id           | ID                 | INTEGER  | -    | NO   | PK   | -                 | ストーリー ID                          |
+| title        | タイトル           | VARCHAR  | 200  | NO   | -    | -                 | ストーリーのタイトル                   |
+| description  | 説明               | TEXT     | -    | YES  | -    | -                 | ストーリーの詳細説明                   |
+| status       | ステータス         | VARCHAR  | 20   | YES  | -    | 'todo'            | カンバンの状態（todo/doing/done）      |
+| story_points | ストーリーポイント | INTEGER  | -    | YES  | -    | -                 | 見積もりポイント                       |
+| priority     | 優先度             | INTEGER  | -    | YES  | -    | 0                 | 優先度（0:なし/1:低/2:中/3:高/4:最高） |
+| project_id   | プロジェクト ID    | INTEGER  | -    | NO   | FK   | -                 | 所属プロジェクトの ID                  |
+| sprint_id    | スプリント ID      | INTEGER  | -    | YES  | FK   | -                 | 所属スプリントの ID                    |
+| assignee_id  | 担当者 ID          | INTEGER  | -    | YES  | FK   | -                 | 担当者のユーザー ID                    |
+| created_at   | 作成日時           | DATETIME | -    | YES  | -    | CURRENT_TIMESTAMP | ストーリー作成日時                     |
+| updated_at   | 更新日時           | DATETIME | -    | YES  | -    | CURRENT_TIMESTAMP | 最終更新日時                           |
+| started_at   | 開始日時           | DATETIME | -    | YES  | -    | -                 | 作業開始日時                           |
+| completed_at | 完了日時           | DATETIME | -    | YES  | -    | -                 | 作業完了日時                           |
 
-## 3. ステータス定義
+## 3. インデックス
 
-### 3.1 Sprint.status
+### 3.1 users
 
-| 値        | 説明   | 遷移可能な値 |
-| --------- | ------ | ------------ |
-| planning  | 計画中 | active       |
-| active    | 実行中 | completed    |
-| completed | 完了   | -            |
+- PRIMARY KEY (id)
+- UNIQUE KEY (username)
+- UNIQUE KEY (email)
 
-### 3.2 Story.status
+### 3.2 projects
 
-| 値    | 説明   | 表示色               |
-| ----- | ------ | -------------------- |
-| todo  | 未着手 | 緑 (#E3FCEF/#006644) |
-| doing | 進行中 | 赤 (#FFEBE6/#BF2600) |
-| done  | 完了   | 灰 (#EBECF0/#42526E) |
+- PRIMARY KEY (id)
+- UNIQUE KEY (key)
+- INDEX (owner_id)
 
-### 3.3 Story.priority
+### 3.3 sprints
 
-| 値  | 説明 | 表示色  | アイコン |
-| --- | ---- | ------- | -------- |
-| 0   | なし | #6B778C | -        |
-| 1   | 低   | #2D8738 | ↓        |
-| 2   | 中   | #0052CC | =        |
-| 3   | 高   | #CD5A19 | ↑        |
-| 4   | 最高 | #CD1F1F | ↑↑       |
+- PRIMARY KEY (id)
+- INDEX (project_id)
+- INDEX (status)
 
-## 4. インデックス
+### 3.4 stories
 
-### 4.1 stories
+- PRIMARY KEY (id)
+- INDEX (project_id)
+- INDEX (sprint_id)
+- INDEX (assignee_id)
+- INDEX (status)
+- INDEX (priority)
 
-| インデックス名      | カラム                        | 説明                       |
-| ------------------- | ----------------------------- | -------------------------- |
-| idx_stories_sprint  | sprint_id, status, priority   | かんばんボード表示の高速化 |
-| idx_stories_project | project_id, sprint_id, status | バックログ表示の高速化     |
+## 4. 外部キー制約
+
+### 4.1 projects
+
+- FOREIGN KEY (owner_id) REFERENCES users(id)
 
 ### 4.2 sprints
 
-| インデックス名      | カラム               | 説明                         |
-| ------------------- | -------------------- | ---------------------------- |
-| idx_sprints_project | project_id, status   | アクティブスプリントの �� 索 |
-| idx_sprints_dates   | start_date, end_date | 期間による検索               |
+- FOREIGN KEY (project_id) REFERENCES projects(id)
 
-## 5. 制約条件
+### 4.3 stories
 
-### stories
-
-- status: 'todo', 'in_progress', 'done'のいずれか
-- points: 0 以上の整数
-- priority: 'high', 'medium', 'low'のいずれか
-
-### sprints
-
-- status: 'planning', 'active', 'completed'のいずれか
-- end_date > start_date
-
-## 6. トリガー
-
-### updated_at 自動更新
-
-```sql
-CREATE TRIGGER update_users_timestamp
-    AFTER UPDATE ON users
-BEGIN
-    UPDATE users SET updated_at = CURRENT_TIMESTAMP
-    WHERE id = NEW.id;
-END;
-
-CREATE TRIGGER update_projects_timestamp
-    AFTER UPDATE ON projects
-BEGIN
-    UPDATE projects SET updated_at = CURRENT_TIMESTAMP
-    WHERE id = NEW.id;
-END;
-
-CREATE TRIGGER update_stories_timestamp
-    AFTER UPDATE ON stories
-BEGIN
-    UPDATE stories SET updated_at = CURRENT_TIMESTAMP
-    WHERE id = NEW.id;
-END;
-```
-
-## 7. バックアップ方法
-
-### SQLite データベースのバックアップ
-
-```bash
-# バックアップの作成
-sqlite3 database.db ".backup 'backup.db'"
-
-# バックアップからの復元
-sqlite3 database.db ".restore 'backup.db'"
-```
-
-## 8. データ型の説明
-
-- INTEGER: 整数値
-- TEXT: UTF-8 テキスト
-- TIMESTAMP: 'YYYY-MM-DD HH:MM:SS'形式
-- DATE: 'YYYY-MM-DD'形式
-- BOOLEAN: 0 または 1
+- FOREIGN KEY (project_id) REFERENCES projects(id)
+- FOREIGN KEY (sprint_id) REFERENCES sprints(id)
+- FOREIGN KEY (assignee_id) REFERENCES users(id)
